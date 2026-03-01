@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h2>Spatial & Lifecycle Analysis</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="text-white mb-0">IP Subnet Utilization</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-white mb-3" style="font-size: 0.95rem;">
+                    <i class="fa-solid fa-circle-info me-1 text-info"></i>本图表展示了各个 IP 子网块目前已知分配的设备数量占整个 C
+                    段（254个可用地址）的使用率。绿色表示宽裕，黄色表示预警，红色表示拥挤。
+                </p>
+                <div id="utilizationChart" class="chart-container"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="text-white mb-0">IP Churn Rate</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-white mb-3" style="font-size: 0.95rem;">
+                    <i class="fa-solid fa-circle-info me-1 text-info"></i>本表格列出了对应 IP 地址在历史上曾经分配改变过的独立设备（依据 MAC
+                    地址）的总次数，用于分析地址的网络流转及复用率。
+                </p>
+                <div class="table-responsive">
+                    <table id="churnTable" class="table table-dark table-hover w-100">
+                        <thead>
+                            <tr>
+                                <th>IP Address</th>
+                                <th>MAC Addresses Count</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function () {
+        const utilChart = echarts.init(document.getElementById('utilizationChart'), echartsTheme);
+
+        $.get('/api/lifecycle/utilization', function (response) {
+            const data = response.data;
+            const xData = data.map(item => item.subnet + '.x');
+            const yData = data.map(item => item.utilization_pct);
+
+            utilChart.setOption({
+                backgroundColor: chartBg,
+                tooltip: { formatter: '{b} <br/>Utilization: {c}%' },
+                xAxis: { type: 'value', max: 100, name: '%' },
+                yAxis: { type: 'category', data: xData },
+                series: [{
+                    type: 'bar',
+                    data: yData,
+                    itemStyle: {
+                        color: function (params) {
+                            if (params.value > 80) return '#ef233c'; // Danger
+                            if (params.value > 60) return '#ffd166'; // Warning
+                            return '#06d6a0'; // Safe
+                        }
+                    }
+                }]
+            });
+        });
+
+        $('#churnTable').DataTable({
+            ajax: '/api/lifecycle/churn',
+            columns: [
+                { data: 'ip' },
+                { data: 'mac_count' }
+            ],
+            order: [[1, "desc"]]
+        });
+
+        window.addEventListener('resize', function () {
+            utilChart.resize();
+        });
+    });
+</script>
+{% endblock %}

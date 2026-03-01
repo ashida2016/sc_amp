@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h2>Time Series Analysis</h2>
+    </div>
+</div>
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-xl-3 col-lg-4 mb-3 mb-xl-0">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="timeSelector" id="radioPreset"
+                                value="preset" checked>
+                            <label class="form-check-label" for="radioPreset">Preset Range</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="timeSelector" id="radioCustom"
+                                value="custom">
+                            <label class="form-check-label" for="radioCustom">Custom Range</label>
+                        </div>
+                    </div>
+                    <div class="col-xl-7 col-lg-6 mb-3 mb-xl-0">
+                        <div id="presetDiv">
+                            <select id="presetRange" class="form-select bg-dark text-light border-secondary w-50">
+                                <option value="1">最近 1 天</option>
+                                <option value="7">最近 1 周</option>
+                                <option value="30" selected>最近 1 个月</option>
+                                <option value="100">最近 100 天</option>
+                                <option value="365">最近 1 年</option>
+                            </select>
+                        </div>
+                        <div id="customDiv" class="d-none">
+                            <div class="input-group w-75">
+                                <span class="input-group-text bg-dark text-light border-secondary">Start</span>
+                                <input type="date" id="startDate"
+                                    class="form-control bg-dark text-light border-secondary">
+                                <span class="input-group-text bg-dark text-light border-secondary">End</span>
+                                <input type="date" id="endDate"
+                                    class="form-control bg-dark text-light border-secondary">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-lg-2">
+                        <button id="applyBtn" class="btn btn-primary w-100"><i
+                                class="fa-solid fa-filter me-1"></i>Apply/Refresh</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 id="chartTitle" class="text-white mb-0">System Active Devices Trend</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-white mb-3" style="font-size: 0.95rem;">
+                    <i
+                        class="fa-solid fa-circle-info me-1 text-info"></i>本图表展示了系统内每日在线存活（Active状态）设备数量的变化趋势。您可以通过上方的时间筛选功能，自定义需要分析的时间跨度。
+                </p>
+                <div id="trendChart" class="chart-container" style="height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function () {
+        const trendChart = echarts.init(document.getElementById('trendChart'), echartsTheme);
+
+        function loadTrend() {
+            let params = {};
+            const mode = $('input[name="timeSelector"]:checked').val();
+            let titleText = "System Active Devices Trend";
+
+            if (mode === 'preset') {
+                params.days = $('#presetRange').val();
+                const optionText = $('#presetRange option:selected').text();
+                titleText += ` (${optionText})`;
+            } else {
+                params.start_date = $('#startDate').val();
+                params.end_date = $('#endDate').val();
+                if (!params.start_date || !params.end_date) {
+                    alert('Please select both Start Date and End Date.');
+                    return;
+                }
+                if (params.start_date > params.end_date) {
+                    alert('Start Date must be before or equal to End Date.');
+                    return;
+                }
+                titleText += ` (${params.start_date} ~ ${params.end_date})`;
+            }
+
+            $('#chartTitle').text(titleText);
+            trendChart.showLoading({ color: '#4361ee', textColor: '#fff', maskColor: 'rgba(15, 23, 42, 0.8)' });
+
+            $.get('/api/trend/online', params, function (response) {
+                trendChart.hideLoading();
+                const data = response.data;
+                const dates = data.map(d => d.scan_date);
+                const counts = data.map(d => d.online_count);
+
+                trendChart.setOption({
+                    backgroundColor: chartBg,
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { type: 'cross' }
+                    },
+                    xAxis: {
+                        type: 'category',
+                        boundaryGap: false,
+                        data: dates
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: 'Online Devices'
+                    },
+                    series: [{
+                        name: 'Online Devices Count',
+                        type: 'line',
+                        data: counts,
+                        smooth: true,
+                        areaStyle: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                { offset: 0, color: 'rgba(67, 97, 238, 0.5)' },
+                                { offset: 1, color: 'rgba(67, 97, 238, 0.1)' }
+                            ])
+                        },
+                        itemStyle: { color: '#4361ee' },
+                        lineStyle: { width: 3 }
+                    }]
+                });
+            });
+        }
+
+        $('input[name="timeSelector"]').change(function () {
+            if ($(this).val() === 'preset') {
+                $('#presetDiv').removeClass('d-none');
+                $('#customDiv').addClass('d-none');
+            } else {
+                $('#presetDiv').addClass('d-none');
+                $('#customDiv').removeClass('d-none');
+            }
+        });
+
+        $('#presetRange').change(function () {
+            if ($('#radioPreset').is(':checked')) {
+                loadTrend();
+            }
+        });
+
+        $('#applyBtn').click(loadTrend);
+        loadTrend(); // Initial load
+
+        window.addEventListener('resize', function () {
+            trendChart.resize();
+        });
+    });
+</script>
+{% endblock %}

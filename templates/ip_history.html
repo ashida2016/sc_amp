@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">IP Usage History</h2>
+        <div class="card">
+            <div class="card-header">
+                <h4 class="text-white mb-0">All IP Records Overview</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-white mb-3" style="font-size: 0.95rem;">
+                    <i class="fa-solid fa-circle-info me-1 text-info"></i>本表格展示了网络中所有已知 IP 地址的最新资产快照信息。其中包括该 IP
+                    最近一次扫描绑定的主机名、设备制造商及设备类型。您可以直接点击具体的 <strong>IP Address</strong>，查看该 IP 历史曾绑定的所有资产及状态变更记录。
+                </p>
+                <div class="table-responsive">
+                    <table id="ipTable" class="table table-dark table-hover table-striped w-100">
+                        <thead>
+                            <tr>
+                                <th>IP Address</th>
+                                <th>Hostname</th>
+                                <th>Vendor</th>
+                                <th>Device Type</th>
+                                <th>Latest Scan</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Detailed History -->
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content text-dark"
+            style="background-color: var(--bg-card); color: var(--text-light) !important;">
+            <div class="modal-header border-bottom border-dark border-opacity-25">
+                <h5 class="modal-title text-light" id="historyModalLabel">IP Detailed History</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h4 id="modalIpTitle" class="text-info mb-3"></h4>
+                <div class="table-responsive">
+                    <table id="detailTable" class="table table-dark table-hover w-100">
+                        <thead>
+                            <tr>
+                                <th>Scan Time</th>
+                                <th>MAC Address</th>
+                                <th>Hostname</th>
+                                <th>Vendor</th>
+                                <th>Status</th>
+                                <th>Device Type</th>
+                                <th>Ports</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let detailTable = null;
+
+    $(document).ready(function () {
+        $('#ipTable').DataTable({
+            ajax: '/api/ip_history',
+            columns: [
+                {
+                    data: 'ip',
+                    render: function (data) {
+                        return `<a href="javascript:void(0);" class="text-info text-decoration-none view-history" data-ip="${data}"><i class="fa-solid fa-link fa-sm me-1"></i>${data}</a>`;
+                    }
+                },
+                { data: 'hostname', defaultContent: '-' },
+                { data: 'vendor', defaultContent: '-' },
+                { data: 'device_type' },
+                { data: 'scan_time' }
+            ]
+        });
+
+        $('#ipTable').on('click', '.view-history', function () {
+            const ip = $(this).data('ip');
+            $('#modalIpTitle').text(`History for ${ip}`);
+
+            if (detailTable) {
+                detailTable.destroy();
+            }
+
+            detailTable = $('#detailTable').DataTable({
+                ajax: `/api/ip_history_detail?ip=${ip}`,
+                order: [[0, "desc"]],
+                columns: [
+                    { data: 'scan_time' },
+                    { data: 'mac' },
+                    { data: 'hostname', defaultContent: '-' },
+                    { data: 'vendor', defaultContent: '-' },
+                    { data: 'status' },
+                    { data: 'device_type' },
+                    { data: 'ports', defaultContent: '-' }
+                ]
+            });
+
+            $('#historyModal').modal('show');
+        });
+    });
+</script>
+{% endblock %}

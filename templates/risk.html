@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h2>Risk & Vulnerabilities</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-5">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="text-white mb-0">Sensitive Management Services Exposed</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-white mb-3" style="font-size: 0.95rem;">
+                    <i class="fa-solid fa-circle-info me-1 text-info"></i>本图表展示了因暴露于网络中而存在安全风险的各类敏感管理服务（如 SSH, RDP,
+                    Telnet 等）的分布及数量。
+                </p>
+                <div id="sensitiveChart" class="chart-container" style="height: 350px;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="text-white mb-0">Database Exposure by Subnet</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-white mb-3" style="font-size: 0.95rem;">
+                    <i class="fa-solid fa-circle-info me-1 text-info"></i>本图表统计了各个子网网段中对外暴露的常见数据库服务（如 MySQL, Oracle,
+                    Redis 等）的分布情况，有助于快速定位高风险网段。
+                </p>
+                <div id="databaseChart" class="chart-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="text-white mb-0">Database Exposure Details</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-white mb-3" style="font-size: 0.95rem;">
+                    <i class="fa-solid fa-circle-info me-1 text-info"></i>本表格详细列出了每个网段中各种主要数据库服务（包括 MySQL, Oracle,
+                    Redis, PostgreSQL）的暴露实例具体数量，您可依据此表进行深入的安全排查与封堵。
+                </p>
+                <div class="table-responsive">
+                    <table id="dbTable" class="table table-dark table-hover w-100">
+                        <thead>
+                            <tr>
+                                <th>Subnet</th>
+                                <th><span class="text-primary">MySQL (3306)</span></th>
+                                <th><span class="text-danger">Oracle (1521)</span></th>
+                                <th><span class="text-warning">Redis (6379)</span></th>
+                                <th><span class="text-info">PostgreSQL (5432)</span></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function () {
+        const sensitiveChart = echarts.init(document.getElementById('sensitiveChart'), echartsTheme);
+        const databaseChart = echarts.init(document.getElementById('databaseChart'), echartsTheme);
+
+        $.get('/api/risk/sensitive', function (response) {
+            const data = response.data;
+            sensitiveChart.setOption({
+                backgroundColor: chartBg,
+                tooltip: { trigger: 'item' },
+                series: [{
+                    name: 'Exposed Services',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    data: data.map(d => ({ name: d.service, value: d.count }))
+                }]
+            });
+        });
+
+        $.get('/api/risk/database', function (response) {
+            const data = response.data;
+
+            $('#dbTable').DataTable({
+                data: data,
+                columns: [
+                    { data: 'subnet' },
+                    { data: 'mysql_count' },
+                    { data: 'oracle_count' },
+                    { data: 'redis_count' },
+                    { data: 'pg_count' }
+                ]
+            });
+
+            const subnets = data.map(d => d.subnet + '.x');
+            const mysql = data.map(d => d.mysql_count);
+            const oracle = data.map(d => d.oracle_count);
+            const redis = data.map(d => d.redis_count);
+
+            databaseChart.setOption({
+                backgroundColor: chartBg,
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                legend: { data: ['MySQL', 'Oracle', 'Redis'] },
+                xAxis: { type: 'category', data: subnets },
+                yAxis: { type: 'value' },
+                series: [
+                    { name: 'MySQL', type: 'bar', stack: 'db', data: mysql },
+                    { name: 'Oracle', type: 'bar', stack: 'db', data: oracle },
+                    { name: 'Redis', type: 'bar', stack: 'db', data: redis }
+                ]
+            });
+        });
+
+        window.addEventListener('resize', function () {
+            sensitiveChart.resize();
+            databaseChart.resize();
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SC AMP - Asset Management{% endblock %}</title>
+    <!-- Bootstrap 5.3.8 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables Bootstrap 5 -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #f72585;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        .navbar {
+            background-color: rgba(15, 23, 42, 0.9) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--text-light) !important;
+            letter-spacing: 1px;
+        }
+
+        .navbar-brand i {
+            color: var(--primary-color);
+        }
+
+        .nav-link {
+            color: var(--text-muted) !important;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--text-light) !important;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+            padding: 1rem 1.5rem;
+        }
+
+        table.dataTable {
+            color: var(--text-light);
+        }
+
+        table.dataTable thead th,
+        table.dataTable thead td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        table.dataTable.no-footer {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_processing,
+        .dataTables_wrapper .dataTables_paginate {
+            color: var(--text-muted);
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            color: var(--text-muted) !important;
+        }
+
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 400px;
+        }
+
+        .table-dark {
+            --bs-table-bg: transparent;
+            --bs-table-striped-bg: rgba(255, 255, 255, 0.02);
+            --bs-table-hover-bg: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+        }
+
+        .dropdown-menu {
+            background-color: var(--bg-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-item {
+            color: var(--text-muted);
+        }
+
+        .dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fa-solid fa-shield-halved me-2"></i>SC AMP
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/"><i class="fa-solid fa-chart-line me-1"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fa-solid fa-server me-1"></i> Assets
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/ip_history">IP Usage History</a></li>
+                            <li><a class="dropdown-item" href="/fingerprint">Fingerprinting</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fa-solid fa-network-wired me-1"></i> Network
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/lifecycle">Spatial & Lifecycle</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fa-solid fa-user-shield me-1"></i> Security
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/compliance">Compliance & Baseline</a></li>
+                            <li><a class="dropdown-item" href="/risk">Risk & Vulnerabilities</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fa-solid fa-bolt me-1"></i> Analytics
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/trend">Time Series Trend</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4 mb-5">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- Bootstrap 5 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- DataTables -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <!-- ECharts 6.0 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@6.0.0/dist/echarts.min.js"></script>
+
+    <script>
+        // Global Datatables Default config
+        $.extend(true, $.fn.dataTable.defaults, {
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search...",
+            },
+            classes: {
+                sWrapper: "dataTables_wrapper dt-bootstrap5"
+            },
+            pageLength: 50,
+            lengthMenu: [[50, 100, 200, -1], [50, 100, 200, "All"]]
+        });
+
+        // Dark theme for echarts common config
+        const echartsTheme = 'dark';
+        const chartBg = 'transparent';
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

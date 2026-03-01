@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h2>Compliance & Baseline</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card border-warning mb-4">
+            <div class="card-header">
+                <h4 class="text-white mb-0"><i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>Shadow IT
+                    Detection (Unauthorized Ports)</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-white mb-3" style="font-size: 0.95rem;">
+                    <i class="fa-solid fa-circle-info me-1 text-info"></i>本表格展示了网络中被识别出的影子 IT（Shadow
+                    IT）资产设备，这些设备通常未经授权便私自接入网络，并在网络层面暴露了未报备的高风险端口和服务。
+                </p>
+                <div class="table-responsive">
+                    <table id="shadowTable" class="table table-dark table-hover w-100">
+                        <thead>
+                            <tr>
+                                <th>IP Address</th>
+                                <th>Hostname</th>
+                                <th>Device Type</th>
+                                <th>Exposed Ports</th>
+                                <th>Last Seen</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card border-danger">
+            <div class="card-header">
+                <h4 class="text-white mb-0"><i class="fa-solid fa-ghost text-danger me-2"></i>Zombie Assets (Inactive /
+                    Silent)</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-white mb-3" style="font-size: 0.95rem;">
+                    <i
+                        class="fa-solid fa-circle-info me-1 text-info"></i>本表格列出了网络中长期静默的不活跃资产（僵尸资产），这些设备可能已被遗忘、废弃或处于离线状态，存在被忽视从而导致的安全合规盲区及风险。
+                </p>
+                <div class="table-responsive">
+                    <table id="zombiesTable" class="table table-dark table-hover w-100">
+                        <thead>
+                            <tr>
+                                <th>IP Address</th>
+                                <th>MAC Address</th>
+                                <th>Hostname</th>
+                                <th>Vendor</th>
+                                <th>Last Active Time</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function () {
+        $('#shadowTable').DataTable({
+            ajax: '/api/compliance/shadow_it',
+            columns: [
+                { data: 'ip' },
+                { data: 'hostname', defaultContent: '-' },
+                { data: 'device_type' },
+                {
+                    data: 'ports', render: function (data) {
+                        return `<span class="badge bg-danger">${data || '-'}</span>`;
+                    }
+                },
+                { data: 'scan_time' }
+            ]
+        });
+
+        $('#zombiesTable').DataTable({
+            ajax: '/api/compliance/zombies',
+            columns: [
+                { data: 'ip' },
+                { data: 'mac', defaultContent: '-' },
+                { data: 'hostname', defaultContent: '-' },
+                { data: 'vendor', defaultContent: '-' },
+                { data: 'scan_time' }
+            ]
+        });
+    });
+</script>
+{% endblock %}

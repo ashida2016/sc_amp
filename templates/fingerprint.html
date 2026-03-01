@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h2>Asset Fingerprinting</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="text-white mb-0">Vendor Distribution</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-white mb-3" style="font-size: 0.95rem;">
+                    <i class="fa-solid fa-circle-info me-1 text-info"></i>本图表展示了网络中所有已知设备的制造商（Vendor）品牌分布的整体占比情况。
+                </p>
+                <div id="vendorChart" class="chart-container"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="text-white mb-0">Device Type Overview</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-white mb-3" style="font-size: 0.95rem;">
+                    <i class="fa-solid fa-circle-info me-1 text-info"></i>本图表统计了网络中资产的具体类型（如网络设备、服务器、物联网设备等）及对应设备数量。
+                </p>
+                <div id="deviceTypeChart" class="chart-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="text-white mb-0">Detailed Vendor Stats</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-white mb-3" style="font-size: 0.95rem;">
+                    <i
+                        class="fa-solid fa-circle-info me-1 text-info"></i>本表格列出了各个设备制造商（品牌）的详细资产数量统计数据，数据默认按设备数量从高到低进行排序。
+                </p>
+                <div class="table-responsive">
+                    <table id="vendorTable" class="table table-dark table-hover w-100">
+                        <thead>
+                            <tr>
+                                <th>Vendor</th>
+                                <th>Device Count</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function () {
+        const vendorChart = echarts.init(document.getElementById('vendorChart'), echartsTheme);
+        const deviceTypeChart = echarts.init(document.getElementById('deviceTypeChart'), echartsTheme);
+
+        // Fetch Vendor Data
+        $.get('/api/fingerprint/vendor', function (response) {
+            const data = response.data;
+            $('#vendorTable').DataTable({
+                data: data,
+                columns: [
+                    { data: 'vendor' },
+                    { data: 'count' }
+                ],
+                order: [[1, "desc"]]
+            });
+
+            const chartData = data.map(item => ({
+                name: item.vendor,
+                value: item.count
+            }));
+
+            vendorChart.setOption({
+                backgroundColor: chartBg,
+                tooltip: { trigger: 'item' },
+                series: [{
+                    name: 'Vendors',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    itemStyle: {
+                        borderRadius: 10,
+                        borderColor: chartBg,
+                        borderWidth: 2
+                    },
+                    data: chartData
+                }]
+            });
+        });
+
+        // Fetch Device Type Data
+        $.get('/api/fingerprint/device_type', function (response) {
+            const data = response.data;
+            const chartData = data.map(item => ({
+                name: item.device_type,
+                value: item.count
+            }));
+
+            deviceTypeChart.setOption({
+                backgroundColor: chartBg,
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                xAxis: { type: 'category', data: chartData.map(d => d.name), axisLabel: { interval: 0, rotate: 30 } },
+                yAxis: { type: 'value' },
+                series: [{
+                    data: chartData.map(d => d.value),
+                    type: 'bar',
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#f72585' },
+                            { offset: 1, color: '#3f37c9' }
+                        ])
+                    }
+                }]
+            });
+        });
+
+        window.addEventListener('resize', function () {
+            vendorChart.resize();
+            deviceTypeChart.resize();
+        });
+    });
+</script>
+{% endblock %}

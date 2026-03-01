@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">Dashboard Overview</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-3">
+        <div class="card p-4 text-center">
+            <h3 class="text-primary">Assets</h3>
+            <p class="text-primary">Total Devices</p>
+            <a href="/ip_history" class="btn btn-outline-primary mt-2">View</a>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-4 text-center">
+            <h3 class="text-info">Network</h3>
+            <p class="text-info">Lifecycle</p>
+            <a href="/lifecycle" class="btn btn-outline-info mt-2">View</a>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-4 text-center">
+            <h3 class="text-warning">Security</h3>
+            <p class="text-warning">Risks</p>
+            <a href="/risk" class="btn btn-outline-warning mt-2">View</a>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-4 text-center">
+            <h3 class="text-danger">Compliance</h3>
+            <p class="text-danger">Baselines</p>
+            <a href="/compliance" class="btn btn-outline-danger mt-2">View</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
