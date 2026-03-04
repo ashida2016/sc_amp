@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS `physical_machines` (
 CREATE TABLE IF NOT EXISTS `ip_extend` (
   `ip` varchar(15) NOT NULL,
   `pm_id` int(11) DEFAULT NULL COMMENT '物理机ID外键',
-  `os_ver` varchar(50) DEFAULT 'Others' COMMENT '操作系统(Windows/Linux/Others)',
+  `os_ver` varchar(50) DEFAULT 'Others' COMMENT '操作系统(Windows/Linux/Esxi Server/Others)',
   `purpose` varchar(255) DEFAULT '' COMMENT '用途说明',
   `comment` varchar(255) DEFAULT '' COMMENT '备注',
   PRIMARY KEY (`ip`),
