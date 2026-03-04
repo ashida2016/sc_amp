@@ -230,6 +230,7 @@ def trend():
 @app.route('/api/trend/online')
 def api_trend_online():
     days = request.args.get('days')
+    hours = request.args.get('hours')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     vendors = request.args.get('vendors')
@@ -250,9 +251,19 @@ def api_trend_online():
         where_clause += f" AND device_type IN ({placeholders})"
         params.extend(device_type_list)
 
+    group_by = "DATE(scan_time)"
+
     if start_date and end_date:
         where_clause += " AND DATE(scan_time) >= %s AND DATE(scan_time) <= %s"
         params.extend([start_date, end_date])
+    elif hours:
+        try:
+            hours_int = int(hours)
+            where_clause += " AND scan_time >= DATE_SUB(NOW(), INTERVAL %s HOUR)"
+            params.append(hours_int)
+            group_by = "DATE_FORMAT(scan_time, '%%Y-%%m-%%d %%H:%%i')"
+        except ValueError:
+            where_clause += " AND scan_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)"
     elif days:
         try:
             days_int = int(days)
@@ -264,7 +275,7 @@ def api_trend_online():
         where_clause += " AND scan_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)"
 
     query = f"""
-    SELECT DATE(scan_time) as scan_date, COUNT(DISTINCT ip) as online_count
+    SELECT {group_by} as scan_date, COUNT(DISTINCT ip) as online_count
     FROM ip_history
     WHERE {where_clause}
     GROUP BY scan_date
@@ -278,7 +289,8 @@ def api_trend_online():
 
     for row in data:
         if 'scan_date' in row and row['scan_date']:
-            row['scan_date'] = row['scan_date'].strftime('%Y-%m-%d')
+            if hasattr(row['scan_date'], 'strftime'):
+                row['scan_date'] = row['scan_date'].strftime('%Y-%m-%d')
     return jsonify({"data": data})
 
 if __name__ == '__main__':
