@@ -110,8 +110,8 @@
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-dark table-striped table-hover mb-0 sticky-header-table">
-                                <thead style="position: sticky; top: 0; z-index: 1;">
+                            <table class="table table-dark table-striped table-hover mb-0 report-table">
+                                <thead>
                                     <tr class="table-active">
                                         <th class="text-center border-secondary">IP Address</th>
                                         <th class="border-secondary">MAC Address</th>
@@ -135,6 +135,15 @@
 
             $('#subnetNav').html(navHtml);
             $('#reportContent').html(contentHtml);
+
+            // Initialize DataTables
+            $('.report-table').DataTable({
+                paging: false,
+                searching: true,
+                info: false,
+                ordering: true,
+                order: [] // Keep the initial server-side sort
+            });
 
             // Active nav handling on scroll
             const sections = $('.subnet-card');
