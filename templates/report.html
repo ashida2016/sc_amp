@@ -63,6 +63,8 @@
                 return;
             }
 
+            const vlanComments = res.vlan_comments || {};
+
             subnets.forEach(subnet => {
                 // Sidebar Nav
                 navHtml += `<a href="#subnet_${subnet.replace(/\./g, '_')}" class="list-group-item list-group-item-action list-group-item-dark fw-bold border-secondary py-3"><i class="fa-solid fa-network-wired me-2"></i> ${subnet}.0/24</a>`;
@@ -75,15 +77,40 @@
                     // Decide Hostname Display Strategy
                     let hostDisplay = ip.h_hostname || 'TBD/待定';
                     if (ip.e_hostname && ip.h_hostname && ip.e_hostname !== 'TBD/待定' && ip.e_hostname !== ip.h_hostname) {
-                        hostDisplay = `<span class="text-conflict" title="Scanner: ${ip.h_hostname} | Hand filled: ${ip.e_hostname}">${ip.e_hostname} <i class="fa-solid fa-triangle-exclamation ms-1"></i></span>`;
+                        hostDisplay = `<span class="text-danger fw-bold" title="Scanner: ${ip.h_hostname} | Hand filled: ${ip.e_hostname}">${ip.e_hostname} <i class="fa-solid fa-triangle-exclamation"></i></span>`;
                     } else if (ip.e_hostname && ip.e_hostname !== 'TBD/待定') {
                         hostDisplay = `<span class="text-manual">${ip.e_hostname}</span>`;
                     }
+                    if (hostDisplay === 'TBD/待定') {
+                        hostDisplay = `<span class="badge bg-warning text-dark">TBD/待定</span>`;
+                    }
 
                     // Device Display Strategy
-                    let devDisplay = ip.h_device_type || 'N/A';
-                    if (ip.e_device_type && ip.e_device_type !== 'Any') {
+                    let devDisplay = ip.h_device_type || 'Any';
+                    if (ip.e_device_type && ip.h_device_type && ip.e_device_type !== 'Any' && ip.e_device_type !== ip.h_device_type) {
+                        devDisplay = `<span class="text-danger fw-bold" title="Scanner: ${ip.h_device_type} | Hand filled: ${ip.e_device_type}">${ip.e_device_type} <i class="fa-solid fa-triangle-exclamation"></i></span>`;
+                    } else if (ip.e_device_type && ip.e_device_type !== 'Any') {
                         devDisplay = `<span class="text-manual">${ip.e_device_type}</span>`;
+                    }
+                    if (devDisplay === 'Any' || devDisplay === 'N/A') {
+                        devDisplay = `<span class="badge bg-secondary">Any</span>`;
+                    }
+
+                    // Status Display Strategy
+                    let statusVal = ip.h_status || ip.e_status || 'Unknown';
+                    let statusDisplay = '';
+                    if (ip.e_status && ip.h_status && ip.e_status !== 'Reserved' && ip.e_status !== ip.h_status) {
+                        statusDisplay = `<span class="text-danger fw-bold" title="Scanner: ${ip.h_status} | Hand filled: ${ip.e_status}">${ip.e_status} <i class="fa-solid fa-triangle-exclamation"></i></span>`;
+                    } else {
+                        statusDisplay = `<span class="badge ${statusVal === 'Active' ? 'bg-success' : 'bg-secondary'}">${statusVal}</span>`;
+                    }
+
+                    // MAC Address Strategy
+                    let macDisplay = ip.mac;
+                    if (!macDisplay) {
+                        macDisplay = `<span class="badge bg-secondary">N/A</span>`;
+                    } else if (macDisplay === '00:00:00:00:00:00') {
+                        macDisplay = `<span class="text-danger fw-bold">00:00:00:00:00:00</span>`;
                     }
 
                     tableRows += `
@@ -91,9 +118,9 @@
                         <td class="text-center">
                             <a href="/ip_detail?ip=${ip.ip}" target="_blank" class="fw-bold text-info text-decoration-none"><i class="fa-solid fa-link me-1"></i> ${ip.ip}</a>
                         </td>
-                        <td>${ip.mac || '<span class="text-muted">N/A</span>'}</td>
+                        <td>${macDisplay}</td>
                         <td style="max-width:200px;" class="text-truncate">${hostDisplay}</td>
-                        <td class="text-center"><span class="badge ${ip.h_status === 'Active' ? 'bg-success' : 'bg-secondary'}">${ip.h_status || ip.e_status || 'Unknown'}</span></td>
+                        <td class="text-center">${statusDisplay}</td>
                         <td>${devDisplay}</td>
                         <td>${ip.machine_name || '<span class="text-muted">-</span>'}</td>
                         <td>${ip.purpose || '<span class="text-muted">-</span>'}</td>
@@ -102,10 +129,12 @@
                     `;
                 });
 
+                let subnetComment = vlanComments[subnet] ? ` <span class="text-secondary fs-6 ms-2 fw-normal">(${vlanComments[subnet]})</span>` : '';
+
                 contentHtml += `
                 <div class="card border-secondary mb-5 subnet-card shadow" id="subnet_${subnet.replace(/\./g, '_')}">
                     <div class="card-header bg-dark border-secondary d-flex justify-content-between align-items-center py-3">
-                        <h4 class="mb-0 text-white"><i class="fa-solid fa-folder-tree text-info me-2"></i> Subnet: ${subnet}.0/24</h4>
+                        <h4 class="mb-0 text-white"><i class="fa-solid fa-folder-tree text-info me-2"></i> Subnet: ${subnet}.0/24${subnetComment}</h4>
                         <span class="badge bg-primary rounded-pill fs-6">${ips.length} IPs recorded</span>
                     </div>
                     <div class="card-body p-0">

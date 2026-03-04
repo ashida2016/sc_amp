@@ -513,9 +513,14 @@ def api_report():
     # Sort subnets naturally using inet_aton similar trick or just sort by parts
     sorted_subnets = sorted(list(subnets_list), key=lambda s: [int(x) if x.isdigit() else 0 for x in s.split('.')])
     
+    # Retrieve vlan comments
+    vlan_rows = execute_query("SELECT subnet, comment FROM vlan_info")
+    vlan_comments = {row['subnet']: row['comment'] for row in vlan_rows} if vlan_rows else {}
+    
     return jsonify({
         "subnets": sorted_subnets,
-        "data": report_data
+        "data": report_data,
+        "vlan_comments": vlan_comments
     })
 
 if __name__ == '__main__':
