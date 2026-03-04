@@ -32,6 +32,10 @@ CREATE TABLE IF NOT EXISTS `ip_extend` (
   `os_ver` varchar(50) DEFAULT 'Others' COMMENT '操作系统(Windows/Linux/Esxi Server/Others)',
   `purpose` varchar(255) DEFAULT '' COMMENT '用途说明',
   `comment` varchar(255) DEFAULT '' COMMENT '备注',
+  `device_type` varchar(50) DEFAULT 'Any' COMMENT '设备分类',
+  `hostname` varchar(255) DEFAULT 'TBD/待定' COMMENT '主机名',
+  `status` varchar(50) DEFAULT 'Reserved' COMMENT '状态',
+  `updated_time` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新日期',
   PRIMARY KEY (`ip`),
   CONSTRAINT `fk_ip_extend_pm` FOREIGN KEY (`pm_id`) REFERENCES `physical_machines` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

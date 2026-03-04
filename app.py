@@ -436,15 +436,18 @@ def api_ip_detail_save():
         os_ver = req_data.get('os_ver')
         purpose = req_data.get('purpose')
         comment = req_data.get('comment')
+        device_type = req_data.get('device_type', 'Any')
+        hostname = req_data.get('hostname', 'TBD/待定')
+        status = req_data.get('status', 'Reserved')
         
         pm_val = pm_id if pm_id != '' else None
         
         insert_ext = """
-        INSERT INTO ip_extend (ip, pm_id, os_ver, purpose, comment)
-        VALUES (%s, %s, %s, %s, %s)
-        ON DUPLICATE KEY UPDATE pm_id=VALUES(pm_id), os_ver=VALUES(os_ver), purpose=VALUES(purpose), comment=VALUES(comment)
+        INSERT INTO ip_extend (ip, pm_id, os_ver, purpose, comment, device_type, hostname, status)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        ON DUPLICATE KEY UPDATE pm_id=VALUES(pm_id), os_ver=VALUES(os_ver), purpose=VALUES(purpose), comment=VALUES(comment), device_type=VALUES(device_type), hostname=VALUES(hostname), status=VALUES(status)
         """
-        execute_update(insert_ext, (ip, pm_val, os_ver, purpose, comment))
+        execute_update(insert_ext, (ip, pm_val, os_ver, purpose, comment, device_type, hostname, status))
         
         return jsonify({"status": "success"})
     except Exception as e:

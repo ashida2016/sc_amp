@@ -49,6 +49,27 @@
                 </div>
                 <div class="card-body" style="background-color: rgba(0,0,0,0.2);">
                     <form id="extendForm">
+                        <!-- New basic extended info row -->
+                        <div class="row mb-3" id="extBasicRow">
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <label class="form-label text-light">Device Type:</label>
+                                <select id="extDeviceType" class="form-select bg-dark text-light border-secondary">
+                                    <!-- populated in JS -->
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <label class="form-label text-light">Host Name:</label>
+                                <input type="text" id="extHostName"
+                                    class="form-control bg-dark text-light border-secondary">
+                                <small id="hostnameWarning" class="text-danger d-none fw-bold mt-1"><i
+                                        class="fa-solid fa-triangle-exclamation"></i> Conflict with history!</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-light">Status:</label>
+                                <input type="text" id="extStatus"
+                                    class="form-control bg-dark text-light border-secondary" readonly>
+                            </div>
+                        </div>
                         <div class="row mb-3">
                             <div class="col-md-6 mb-3 mb-md-0">
                                 <label class="form-label text-light">Physical Machine (Storage/Server):</label>
@@ -133,6 +154,9 @@
             $('#pmSelect').html(pmOpts);
 
             globalDeviceTypes = res.device_types;
+            let dtOptions = `<option value="Any">Any</option>`;
+            globalDeviceTypes.forEach(t => { dtOptions += `<option value="${t}">${t}</option>`; });
+            $('#extDeviceType').html(dtOptions);
         });
 
         // 2. Search Button
@@ -189,11 +213,54 @@
                 }
 
                 // Fill Extended Info
+                let extDeviceType = "Any";
+                let extHostName = "TBD/待定";
+                let extStatus = "Reserved";
+
+                $('#extHostName').removeClass('text-danger border-danger is-invalid');
+                $('#hostnameWarning').addClass('d-none');
+
+                if (res.history) {
+                    extDeviceType = res.history.device_type || 'Any';
+                    extStatus = res.history.status || 'Reserved';
+                    let histHost = res.history.hostname || "";
+                    if (res.extend) {
+                        let extHost = res.extend.hostname || "";
+                        if (extHost === "") {
+                            extHostName = histHost;
+                        } else if (extHost === histHost) {
+                            extHostName = histHost;
+                        } else {
+                            extHostName = extHost;
+                            $('#extHostName').addClass('text-danger border-danger is-invalid');
+                            $('#hostnameWarning').removeClass('d-none');
+                        }
+                    } else {
+                        extHostName = histHost;
+                    }
+                } else {
+                    if (res.extend) {
+                        extHostName = res.extend.hostname || "TBD/待定";
+                        extDeviceType = res.extend.device_type || 'Any';
+                        extStatus = res.extend.status || 'Reserved';
+                    } else {
+                        extHostName = "TBD/待定";
+                        extDeviceType = "Any";
+                        extStatus = "Reserved";
+                    }
+                }
+
+                $('#extDeviceType').val(extDeviceType);
+                $('#extHostName').val(extHostName);
+                $('#extStatus').val(extStatus);
+
                 if (res.extend) {
                     $('#extendInfoCard').removeClass('border-secondary').addClass('border-info');
                     $('#extendInfoHeader').removeClass('bg-secondary border-secondary').addClass('bg-info border-info');
                     $('#extendIpDisplay').html(`Extended Information <span class="badge bg-success ms-2">Existed !</span>`);
                     $('#extendForm').find('.form-control, .form-select').removeClass('text-light').addClass('text-bright-green');
+                    // Except for warning
+                    $('#extHostName.text-danger').removeClass('text-bright-green');
 
                     $('#pmSelect').val(res.extend.pm_id || "");
                     $('#osVer').val(res.extend.os_ver || "Others");
@@ -224,6 +291,9 @@
             payload.save_history = false;
 
             // Grab extend fields
+            payload.device_type = $('#extDeviceType').val();
+            payload.hostname = $('#extHostName').val();
+            payload.status = $('#extStatus').val();
             payload.pm_id = $('#pmSelect').val();
             payload.os_ver = $('#osVer').val();
             payload.purpose = $('#extPurpose').val();
