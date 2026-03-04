@@ -31,7 +31,7 @@
         <div class="col-12">
             <div class="card border-info" id="basicInfoCard">
                 <div class="card-header bg-info bg-opacity-25 border-info" id="basicInfoHeader">
-                    <h5 class="text-white mb-0" id="currentIpDisplay">Basic Information</h5>
+                    <h5 class="text-white mb-0" id="currentIpDisplay">Actual information</h5>
                 </div>
                 <div class="card-body" id="basicInfoContainer" style="background-color: rgba(0,0,0,0.2);">
                     <!-- Will be populated by JS -->
@@ -149,7 +149,7 @@
 
             // Hide details while loading
             $('#detailSection').addClass('d-none');
-            $('#currentIpDisplay').html(`Basic Information - ${currentIP}`);
+            $('#currentIpDisplay').html(`Actual information - ${currentIP}`);
             $('#extendIpDisplay').html(`Extended Information`);
 
             $.get(`/api/ip_detail/search?ip=${currentIP}`, function (res) {
@@ -160,7 +160,7 @@
                     isNewHistory = false;
                     $('#basicInfoCard').removeClass('border-secondary').addClass('border-info');
                     $('#basicInfoHeader').removeClass('bg-secondary border-secondary').addClass('bg-info border-info');
-                    $('#currentIpDisplay').html(`Basic Information - ${currentIP} <span class="badge bg-success ms-2">Existed !</span>`);
+                    $('#currentIpDisplay').html(`Actual information - ${currentIP} <span class="badge bg-success ms-2">Existed !</span>`);
 
                     $('#basicInfoContainer').html(`
                     <div class="row text-light">
@@ -179,30 +179,11 @@
                     isNewHistory = true;
                     $('#basicInfoCard').removeClass('border-info').addClass('border-secondary');
                     $('#basicInfoHeader').removeClass('bg-info border-info').addClass('bg-secondary border-secondary');
-                    $('#currentIpDisplay').html(`Basic Information - ${currentIP}`);
-
-                    let dtOptions = `<option value="Any">Any</option>`;
-                    globalDeviceTypes.forEach(t => { dtOptions += `<option value="${t}">${t}</option>`; });
+                    $('#currentIpDisplay').html(`Actual information - ${currentIP}`);
 
                     $('#basicInfoContainer').html(`
-                        <div class="alert alert-warning py-2 mb-3 bg-opacity-25 border-warning text-warning">
-                            <i class="fa-solid fa-triangle-exclamation"></i> No historical scan records found for this IP. You can pre-register basic info below.
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label text-light">Device Type:</label>
-                                <select id="newDeviceType" class="form-select bg-dark text-light border-secondary">
-                                    ${dtOptions}
-                                </select>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label text-light">Host Name:</label>
-                                <input type="text" id="newHostName" class="form-control bg-dark text-light border-secondary" value="TBD/待定">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label text-light">Status:</label>
-                                <input type="text" id="newStatus" class="form-control bg-dark text-light border-secondary" value="Reserved" readonly>
-                            </div>
+                        <div class="alert alert-warning py-2 mb-0 bg-opacity-25 border-warning text-warning">
+                            <i class="fa-solid fa-triangle-exclamation"></i> No historical scan records found for this IP. Wait for the scanner to populate this actual info.
                         </div>
                     `);
                 }
@@ -240,14 +221,7 @@
             const payload = { ip: currentIP };
 
             // Grab basic logic
-            if (isNewHistory) {
-                payload.save_history = true;
-                payload.device_type = $('#newDeviceType').val();
-                payload.hostname = $('#newHostName').val();
-                payload.status = $('#newStatus').val();
-            } else {
-                payload.save_history = false;
-            }
+            payload.save_history = false;
 
             // Grab extend fields
             payload.pm_id = $('#pmSelect').val();

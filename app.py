@@ -431,19 +431,6 @@ def api_ip_detail_save():
         ip = req_data.get('ip')
         if not ip:
             return jsonify({"status": "error", "message": "IP is missing"}), 400
-            
-        # If the user is submitting a new or modifying basic history record from the form
-        if req_data.get('save_history'):
-            device_type = req_data.get('device_type')
-            hostname = req_data.get('hostname')
-            status = req_data.get('status', 'Reserved')
-            # Insert a manual record into ip_history as the newest info
-            insert_hist = """
-            INSERT INTO ip_history (ip, mac, hostname, status, device_type, vendor)
-            VALUES (%s, '', %s, %s, %s, '')
-            """
-            execute_update(insert_hist, (ip, hostname, status, device_type))
-            
         # Parse extend fields
         pm_id = req_data.get('pm_id')
         os_ver = req_data.get('os_ver')
