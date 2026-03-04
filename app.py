@@ -84,6 +84,18 @@ def api_fingerprint_device_type():
     data = execute_query(query)
     return jsonify({"data": data})
 
+@app.route('/api/vendors')
+def api_vendors():
+    query = "SELECT DISTINCT vendor FROM ip_history WHERE vendor IS NOT NULL AND vendor != '' ORDER BY vendor"
+    data = execute_query(query)
+    return jsonify({"data": [r['vendor'] for r in data]})
+
+@app.route('/api/device_types')
+def api_device_types():
+    query = "SELECT DISTINCT device_type FROM ip_history WHERE device_type IS NOT NULL AND device_type != '' ORDER BY device_type"
+    data = execute_query(query)
+    return jsonify({"data": [r['device_type'] for r in data]})
+
 @app.route('/lifecycle')
 def lifecycle():
     return render_template('lifecycle.html')
@@ -197,7 +209,8 @@ def api_risk_database():
            SUM(FIND_IN_SET('3306', ports) > 0) as mysql_count,
            SUM(FIND_IN_SET('1521', ports) > 0) as oracle_count,
            SUM(FIND_IN_SET('6379', ports) > 0) as redis_count,
-           SUM(FIND_IN_SET('5432', ports) > 0) as pg_count
+           SUM(FIND_IN_SET('5432', ports) > 0) as pg_count,
+           SUM(FIND_IN_SET('1433', ports) > 0) as mssql_count
     FROM Ranked
     WHERE rn = 1 AND status='Active'
     GROUP BY subnet;
@@ -219,9 +232,23 @@ def api_trend_online():
     days = request.args.get('days')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
+    vendors = request.args.get('vendors')
+    device_types = request.args.get('device_types')
 
     where_clause = "status = 'Active'"
     params = []
+
+    if vendors:
+        vendor_list = vendors.split(',')
+        placeholders = ', '.join(['%s'] * len(vendor_list))
+        where_clause += f" AND vendor IN ({placeholders})"
+        params.extend(vendor_list)
+        
+    if device_types:
+        device_type_list = device_types.split(',')
+        placeholders = ', '.join(['%s'] * len(device_type_list))
+        where_clause += f" AND device_type IN ({placeholders})"
+        params.extend(device_type_list)
 
     if start_date and end_date:
         where_clause += " AND DATE(scan_time) >= %s AND DATE(scan_time) <= %s"

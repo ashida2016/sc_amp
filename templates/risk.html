@@ -45,7 +45,7 @@
             <div class="card-body">
                 <p class="text-white mb-3" style="font-size: 0.95rem;">
                     <i class="fa-solid fa-circle-info me-1 text-info"></i>本表格详细列出了每个网段中各种主要数据库服务（包括 MySQL, Oracle,
-                    Redis, PostgreSQL）的暴露实例具体数量，您可依据此表进行深入的安全排查与封堵。
+                    Redis, PostgreSQL, MS SQL Server）的暴露实例具体数量，您可依据此表进行深入的安全排查与封堵。
                 </p>
                 <div class="table-responsive">
                     <table id="dbTable" class="table table-dark table-hover w-100">
@@ -56,6 +56,7 @@
                                 <th><span class="text-danger">Oracle (1521)</span></th>
                                 <th><span class="text-warning">Redis (6379)</span></th>
                                 <th><span class="text-info">PostgreSQL (5432)</span></th>
+                                <th><span class="text-secondary">MS SQL (1433)</span></th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -97,7 +98,8 @@
                     { data: 'mysql_count' },
                     { data: 'oracle_count' },
                     { data: 'redis_count' },
-                    { data: 'pg_count' }
+                    { data: 'pg_count' },
+                    { data: 'mssql_count' }
                 ]
             });
 
@@ -105,17 +107,21 @@
             const mysql = data.map(d => d.mysql_count);
             const oracle = data.map(d => d.oracle_count);
             const redis = data.map(d => d.redis_count);
+            const pg = data.map(d => d.pg_count);
+            const mssql = data.map(d => d.mssql_count);
 
             databaseChart.setOption({
                 backgroundColor: chartBg,
                 tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-                legend: { data: ['MySQL', 'Oracle', 'Redis'] },
+                legend: { data: ['MySQL', 'Oracle', 'Redis', 'PostgreSQL', 'MS SQL'] },
                 xAxis: { type: 'category', data: subnets },
                 yAxis: { type: 'value' },
                 series: [
                     { name: 'MySQL', type: 'bar', stack: 'db', data: mysql },
                     { name: 'Oracle', type: 'bar', stack: 'db', data: oracle },
-                    { name: 'Redis', type: 'bar', stack: 'db', data: redis }
+                    { name: 'Redis', type: 'bar', stack: 'db', data: redis },
+                    { name: 'PostgreSQL', type: 'bar', stack: 'db', data: pg },
+                    { name: 'MS SQL', type: 'bar', stack: 'db', data: mssql }
                 ]
             });
         });

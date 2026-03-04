@@ -10,8 +10,9 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-xl-3 col-lg-4 mb-3 mb-xl-0">
+                <div class="row">
+                    <!-- Radio Buttons -->
+                    <div class="col-12 mb-3">
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="timeSelector" id="radioPreset"
                                 value="preset" checked>
@@ -23,146 +24,267 @@
                             <label class="form-check-label" for="radioCustom">Custom Range</label>
                         </div>
                     </div>
-                    <div class="col-xl-7 col-lg-6 mb-3 mb-xl-0">
-                        <div id="presetDiv">
-                            <select id="presetRange" class="form-select bg-dark text-light border-secondary w-50">
-                                <option value="1">最近 1 天</option>
-                                <option value="7">最近 1 周</option>
-                                <option value="30" selected>最近 1 个月</option>
-                                <option value="100">最近 100 天</option>
-                                <option value="365">最近 1 年</option>
-                            </select>
-                        </div>
-                        <div id="customDiv" class="d-none">
-                            <div class="input-group w-75">
-                                <span class="input-group-text bg-dark text-light border-secondary">Start</span>
-                                <input type="date" id="startDate"
-                                    class="form-control bg-dark text-light border-secondary">
-                                <span class="input-group-text bg-dark text-light border-secondary">End</span>
-                                <input type="date" id="endDate"
-                                    class="form-control bg-dark text-light border-secondary">
+
+                    <!-- Date Filters -->
+                    <div class="col-12 mb-3 d-flex align-items-center">
+                        <label class="text-white font-weight-bold me-3 text-nowrap" style="min-width: 100px;">Time
+                            Range</label>
+                        <div class="flex-grow-1">
+                            <div id="presetDiv">
+                                <select id="presetRange" class="form-select bg-dark text-light border-secondary w-100">
+                                    <option value="1">最近 1 天</option>
+                                    <option value="7">最近 1 周</option>
+                                    <option value="30" selected>最近 1 个月</option>
+                                    <option value="100">最近 100 天</option>
+                                    <option value="365">最近 1 年</option>
+                                </select>
+                            </div>
+                            <div id="customDiv" class="d-none">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-dark text-light border-secondary">Start</span>
+                                    <input type="date" id="startDate"
+                                        class="form-control bg-dark text-light border-secondary">
+                                    <span class="input-group-text bg-dark text-light border-secondary">End</span>
+                                    <input type="date" id="endDate"
+                                        class="form-control bg-dark text-light border-secondary">
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-xl-2 col-lg-2">
-                        <button id="applyBtn" class="btn btn-primary w-100"><i
-                                class="fa-solid fa-filter me-1"></i>Apply/Refresh</button>
+
+                    <!-- Vendor Filter -->
+                    <div class="col-12 mb-3 d-flex align-items-center">
+                        <label class="text-white font-weight-bold me-3 text-nowrap"
+                            style="min-width: 100px;">Vendor</label>
+                        <div class="flex-grow-1">
+                            <select id="vendorSelect" class="form-select" multiple="multiple"
+                                data-placeholder="Filter by Vendor">
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Device Type Filter -->
+                    <div class="col-12 mb-3 d-flex align-items-center">
+                        <label class="text-white font-weight-bold me-3 text-nowrap" style="min-width: 100px;">Device
+                            Type</label>
+                        <div class="flex-grow-1">
+                            <select id="deviceTypeSelect" class="form-select" multiple="multiple"
+                                data-placeholder="Filter by Device Type">
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Apply Button -->
+                    <div class="col-12 text-end">
+                        <button id="applyBtn" class="btn btn-primary px-5"><i
+                                class="fa-solid fa-filter me-1"></i>Apply</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h4 id="chartTitle" class="text-white mb-0">System Active Devices Trend</h4>
-            </div>
-            <div class="card-body">
-                <p class="text-white mb-3" style="font-size: 0.95rem;">
-                    <i
-                        class="fa-solid fa-circle-info me-1 text-info"></i>本图表展示了系统内每日在线存活（Active状态）设备数量的变化趋势。您可以通过上方的时间筛选功能，自定义需要分析的时间跨度。
-                </p>
-                <div id="trendChart" class="chart-container" style="height: 500px;"></div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 id="chartTitle" class="text-white mb-0">System Active Devices Trend</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-white mb-3" style="font-size: 0.95rem;">
+                        <i
+                            class="fa-solid fa-circle-info me-1 text-info"></i>本图表展示了系统内每日在线存活（Active状态）设备数量的变化趋势。您可以通过上方的时间筛选功能，自定义需要分析的时间跨度。
+                    </p>
+                    <div id="trendChart" class="chart-container" style="height: 500px;"></div>
+                </div>
             </div>
         </div>
     </div>
-</div>
-{% endblock %}
+    {% endblock %}
 
-{% block extra_js %}
-<script>
-    $(document).ready(function () {
-        const trendChart = echarts.init(document.getElementById('trendChart'), echartsTheme);
-
-        function loadTrend() {
-            let params = {};
-            const mode = $('input[name="timeSelector"]:checked').val();
-            let titleText = "System Active Devices Trend";
-
-            if (mode === 'preset') {
-                params.days = $('#presetRange').val();
-                const optionText = $('#presetRange option:selected').text();
-                titleText += ` (${optionText})`;
-            } else {
-                params.start_date = $('#startDate').val();
-                params.end_date = $('#endDate').val();
-                if (!params.start_date || !params.end_date) {
-                    alert('Please select both Start Date and End Date.');
-                    return;
-                }
-                if (params.start_date > params.end_date) {
-                    alert('Start Date must be before or equal to End Date.');
-                    return;
-                }
-                titleText += ` (${params.start_date} ~ ${params.end_date})`;
-            }
-
-            $('#chartTitle').text(titleText);
-            trendChart.showLoading({ color: '#4361ee', textColor: '#fff', maskColor: 'rgba(15, 23, 42, 0.8)' });
-
-            $.get('/api/trend/online', params, function (response) {
-                trendChart.hideLoading();
-                const data = response.data;
-                const dates = data.map(d => d.scan_date);
-                const counts = data.map(d => d.online_count);
-
-                trendChart.setOption({
-                    backgroundColor: chartBg,
-                    tooltip: {
-                        trigger: 'axis',
-                        axisPointer: { type: 'cross' }
-                    },
-                    xAxis: {
-                        type: 'category',
-                        boundaryGap: false,
-                        data: dates
-                    },
-                    yAxis: {
-                        type: 'value',
-                        name: 'Online Devices'
-                    },
-                    series: [{
-                        name: 'Online Devices Count',
-                        type: 'line',
-                        data: counts,
-                        smooth: true,
-                        areaStyle: {
-                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                { offset: 0, color: 'rgba(67, 97, 238, 0.5)' },
-                                { offset: 1, color: 'rgba(67, 97, 238, 0.1)' }
-                            ])
-                        },
-                        itemStyle: { color: '#4361ee' },
-                        lineStyle: { width: 3 }
-                    }]
-                });
-            });
+    {% block extra_css %}
+    <link href="{{ url_for('static', filename='css/select2.min.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/select2-bootstrap-5-theme.min.css') }}" rel="stylesheet" />
+    <style>
+        .select2-container--bootstrap-5.select2-container--focus .select2-selection,
+        .select2-container--bootstrap-5.select2-container--open .select2-selection {
+            box-shadow: none;
+            border-color: rgba(67, 97, 238, 0.5);
         }
 
-        $('input[name="timeSelector"]').change(function () {
-            if ($(this).val() === 'preset') {
-                $('#presetDiv').removeClass('d-none');
-                $('#customDiv').addClass('d-none');
-            } else {
-                $('#presetDiv').addClass('d-none');
-                $('#customDiv').removeClass('d-none');
+        .select2-container--bootstrap-5 .select2-selection {
+            background-color: #212529 !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #f8fafc !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+            background-color: rgba(67, 97, 238, 0.2);
+            color: #ffffff !important;
+            border: 1px solid rgba(67, 97, 238, 0.5);
+            white-space: nowrap !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-dropdown {
+            background-color: #212529;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option {
+            color: #f8fafc;
+            background-color: #212529;
+            white-space: nowrap !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option[aria-selected="true"] {
+            background-color: rgba(67, 97, 238, 0.3) !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option--highlighted[aria-selected] {
+            background-color: #4361ee !important;
+            color: white;
+        }
+
+        .select2-container--bootstrap-5 .select2-search__field {
+            color: #f8fafc !important;
+            background-color: #212529 !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-search__field::placeholder {
+            color: #94a3b8;
+        }
+
+        /* 解决高度和撑满的问题 */
+        .select2-container .select2-selection--multiple {
+            min-height: 38px;
+            display: flex;
+            align-items: center;
+        }
+    </style>
+    {% endblock %}
+
+    {% block extra_js %}
+    <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+    <script>
+        $(document).ready(function () {
+            const trendChart = echarts.init(document.getElementById('trendChart'), echartsTheme);
+
+            function loadTrend() {
+                let params = {};
+                const mode = $('input[name="timeSelector"]:checked').val();
+                let titleText = "System Active Devices Trend";
+
+                if (mode === 'preset') {
+                    params.days = $('#presetRange').val();
+                    const optionText = $('#presetRange option:selected').text();
+                    titleText += ` (${optionText})`;
+                } else {
+                    params.start_date = $('#startDate').val();
+                    params.end_date = $('#endDate').val();
+                    if (!params.start_date || !params.end_date) {
+                        alert('Please select both Start Date and End Date.');
+                        return;
+                    }
+                    if (params.start_date > params.end_date) {
+                        alert('Start Date must be before or equal to End Date.');
+                        return;
+                    }
+                    titleText += ` (${params.start_date} ~ ${params.end_date})`;
+                }
+
+                const vendors = $('#vendorSelect').val();
+                if (vendors && vendors.length > 0) {
+                    params.vendors = vendors.join(',');
+                }
+
+                const deviceTypes = $('#deviceTypeSelect').val();
+                if (deviceTypes && deviceTypes.length > 0) {
+                    params.device_types = deviceTypes.join(',');
+                }
+
+                $('#chartTitle').text(titleText);
+                trendChart.showLoading({ color: '#4361ee', textColor: '#fff', maskColor: 'rgba(15, 23, 42, 0.8)' });
+
+                $.get('/api/trend/online', params, function (response) {
+                    trendChart.hideLoading();
+                    const data = response.data;
+                    const dates = data.map(d => d.scan_date);
+                    const counts = data.map(d => d.online_count);
+
+                    trendChart.setOption({
+                        backgroundColor: chartBg,
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: { type: 'cross' }
+                        },
+                        xAxis: {
+                            type: 'category',
+                            boundaryGap: false,
+                            data: dates
+                        },
+                        yAxis: {
+                            type: 'value',
+                            name: 'Online Devices'
+                        },
+                        series: [{
+                            name: 'Online Devices Count',
+                            type: 'line',
+                            data: counts,
+                            smooth: true,
+                            areaStyle: {
+                                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                    { offset: 0, color: 'rgba(67, 97, 238, 0.5)' },
+                                    { offset: 1, color: 'rgba(67, 97, 238, 0.1)' }
+                                ])
+                            },
+                            itemStyle: { color: '#4361ee' },
+                            lineStyle: { width: 3 }
+                        }]
+                    });
+                });
             }
-        });
 
-        $('#presetRange').change(function () {
-            if ($('#radioPreset').is(':checked')) {
-                loadTrend();
-            }
-        });
+            $('input[name="timeSelector"]').change(function () {
+                if ($(this).val() === 'preset') {
+                    $('#presetDiv').removeClass('d-none');
+                    $('#customDiv').addClass('d-none');
+                } else {
+                    $('#presetDiv').addClass('d-none');
+                    $('#customDiv').removeClass('d-none');
+                }
+            });
 
-        $('#applyBtn').click(loadTrend);
-        loadTrend(); // Initial load
+            $('#presetRange').change(function () {
+                if ($('#radioPreset').is(':checked')) {
+                    loadTrend();
+                }
+            });
 
-        window.addEventListener('resize', function () {
-            trendChart.resize();
+            $('#applyBtn').click(loadTrend);
+
+            // Initialize Select2 with dark theme adjustments
+            $('#vendorSelect').select2({ theme: 'bootstrap-5', width: '100%' });
+            $('#deviceTypeSelect').select2({ theme: 'bootstrap-5', width: '100%' });
+
+            // Load Select2 Options
+            $.get('/api/vendors', function (response) {
+                response.data.forEach(function (vendor) {
+                    const newOption = new Option(vendor, vendor, false, false);
+                    $('#vendorSelect').append(newOption).trigger('change');
+                });
+            });
+
+            $.get('/api/device_types', function (response) {
+                response.data.forEach(function (dt) {
+                    const newOption = new Option(dt, dt, false, false);
+                    $('#deviceTypeSelect').append(newOption).trigger('change');
+                });
+            });
+
+            loadTrend(); // Initial load
+
+            window.addEventListener('resize', function () {
+                trendChart.resize();
+            });
         });
-    });
-</script>
-{% endblock %}
+    </script>
+    {% endblock %}
