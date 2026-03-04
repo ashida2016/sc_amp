@@ -302,13 +302,13 @@ def api_vlan_info():
     if request.method == 'GET':
         query = """
         WITH AllSubnets AS (
-            SELECT DISTINCT SUBSTRING_INDEX(ip, '.', 3) as subnet FROM ip_history
+            SELECT DISTINCT SUBSTRING_INDEX(ip, '.', 3) COLLATE utf8mb4_unicode_ci as subnet FROM ip_history
             UNION
-            SELECT subnet FROM vlan_info
+            SELECT subnet COLLATE utf8mb4_unicode_ci FROM vlan_info
         )
         SELECT a.subnet, COALESCE(v.comment, 'No comment') as comment
         FROM AllSubnets a
-        LEFT JOIN vlan_info v ON a.subnet = v.subnet
+        LEFT JOIN vlan_info v ON a.subnet COLLATE utf8mb4_unicode_ci = v.subnet COLLATE utf8mb4_unicode_ci
         ORDER BY a.subnet
         """
         data = execute_query(query)
