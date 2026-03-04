@@ -58,14 +58,23 @@
 
             // ECharts 纵轴(类目轴)默认是将数组最后一位渲染在最上方，
             // 故升序排序即可实现视觉上的“从大到小降序排列”
-            data.sort((a, b) => a.active_ips - b.active_ips);
+            data.sort((a, b) => (a.active_ips + a.reserved_ips) - (b.active_ips + b.reserved_ips));
 
             const xData = data.map(item => item.subnet + '.x');
-            const yData = data.map(item => item.active_ips);
+            const yDataActive = data.map(item => item.active_ips);
+            const yDataReserved = data.map(item => item.reserved_ips);
 
             utilChart.setOption({
                 backgroundColor: chartBg,
-                tooltip: { formatter: '{b} <br/>IP 数量: {c}' },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' }
+                },
+                legend: {
+                    data: ['Active', 'Reserved'],
+                    textStyle: { color: '#ffffff' },
+                    bottom: 0
+                },
                 xAxis: {
                     type: 'value',
                     name: 'IP 数量',
@@ -79,13 +88,22 @@
                     data: xData,
                     axisLabel: { fontSize: 14 }
                 },
-                series: [{
-                    type: 'bar',
-                    data: yData,
-                    itemStyle: {
-                        color: '#87ceeb'
+                series: [
+                    {
+                        name: 'Active',
+                        type: 'bar',
+                        stack: 'total',
+                        data: yDataActive,
+                        itemStyle: { color: '#4ade80' } // Success green
+                    },
+                    {
+                        name: 'Reserved',
+                        type: 'bar',
+                        stack: 'total',
+                        data: yDataReserved,
+                        itemStyle: { color: '#6c757d' } // Secondary gray
                     }
-                }]
+                ]
             });
         });
 

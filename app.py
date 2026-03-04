@@ -109,14 +109,20 @@ def api_lifecycle_utilization():
     )
     SELECT 
         SUBSTRING_INDEX(ip, '.', 3) as subnet,
-        COUNT(DISTINCT ip) as active_ips
+        SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END) as active_ips,
+        SUM(CASE WHEN status = 'Reserved' THEN 1 ELSE 0 END) as reserved_ips
     FROM Ranked 
-    WHERE rn = 1 AND status = 'Active'
+    WHERE rn = 1 AND status IN ('Active', 'Reserved')
     GROUP BY subnet;
     """
     data = execute_query(query)
     for row in data:
-        row['utilization_pct'] = round((row['active_ips'] / 254.0) * 100, 2)
+        active_cnt = int(row['active_ips']) if row['active_ips'] else 0
+        reserved_cnt = int(row['reserved_ips']) if row['reserved_ips'] else 0
+        row['active_ips'] = active_cnt
+        row['reserved_ips'] = reserved_cnt
+        total = active_cnt + reserved_cnt
+        row['utilization_pct'] = round((total / 254.0) * 100, 2)
     return jsonify({"data": data})
 
 @app.route('/api/lifecycle/churn')
