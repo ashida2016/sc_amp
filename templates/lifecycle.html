@@ -7,7 +7,7 @@
     </div>
 </div>
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-12 mb-4">
         <div class="card">
             <div class="card-header">
                 <h4 class="text-white mb-0">IP Subnet Utilization</h4>
@@ -17,11 +17,11 @@
                     <i class="fa-solid fa-circle-info me-1 text-info"></i>本图表展示了各个 IP 子网块目前已知分配的设备数量占整个 C
                     段（254个可用地址）的使用率。绿色表示宽裕，黄色表示预警，红色表示拥挤。
                 </p>
-                <div id="utilizationChart" class="chart-container"></div>
+                <div id="utilizationChart" class="chart-container" style="height: 500px"></div>
             </div>
         </div>
     </div>
-    <div class="col-md-6">
+    <div class="col-12 mb-4">
         <div class="card">
             <div class="card-header">
                 <h4 class="text-white mb-0">IP Churn Rate</h4>
@@ -54,7 +54,11 @@
         const utilChart = echarts.init(document.getElementById('utilizationChart'), echartsTheme);
 
         $.get('/api/lifecycle/utilization', function (response) {
-            const data = response.data;
+            let data = response.data;
+
+            // 按网段内机器数量从少到多排序
+            data.sort((a, b) => a.active_ips - b.active_ips);
+
             const xData = data.map(item => item.subnet + '.x');
             const yData = data.map(item => item.utilization_pct);
 
