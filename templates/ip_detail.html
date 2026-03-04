@@ -45,7 +45,7 @@
         <div class="col-12">
             <div class="card border-secondary" id="extendInfoCard">
                 <div class="card-header bg-secondary bg-opacity-25 border-secondary" id="extendInfoHeader">
-                    <h5 class="text-white mb-0" id="extendIpDisplay">Extended Information</h5>
+                    <h5 class="text-white mb-0" id="extendIpDisplay">Extended Information By Manual</h5>
                 </div>
                 <div class="card-body" style="background-color: rgba(0,0,0,0.2);">
                     <form id="extendForm">
@@ -157,6 +157,23 @@
             let dtOptions = `<option value="Any">Any</option>`;
             globalDeviceTypes.forEach(t => { dtOptions += `<option value="${t}">${t}</option>`; });
             $('#extDeviceType').html(dtOptions);
+
+            // Auto trigger search if url has ?ip=xxx
+            const urlParams = new URLSearchParams(window.location.search);
+            const ipParam = urlParams.get('ip');
+            if (ipParam) {
+                const parts = ipParam.split('.');
+                if (parts.length === 4) {
+                    const subnet = parts.slice(0, 3).join('.');
+                    const suffix = parts[3];
+                    // small timeout is sometimes needed to make sure DOM select matches the value
+                    setTimeout(() => {
+                        $('#subnetSelect').val(subnet);
+                        $('#ipSuffix').val(suffix);
+                        $('#searchBtn').click();
+                    }, 300);
+                }
+            }
         });
 
         // 2. Search Button

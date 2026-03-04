@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4 d-flex justify-content-between align-items-center">
+        <h2>IP Report View</h2>
+        <button class="btn btn-outline-info" onclick="window.location.reload()"><i
+                class="fa-solid fa-arrows-rotate me-1"></i> Refresh</button>
+    </div>
+</div>
+
+<div class="row p-0 m-0 w-100">
+    <!-- Left Navigation -->
+    <div class="col-md-2 col-sm-3 p-0 pe-3 position-relative">
+        <div class="list-group shadow-sm sticky-top" id="subnetNav"
+            style="top: 80px; max-height: calc(100vh - 100px); overflow-y: auto;">
+            <!-- Rendered by JS -->
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-md-10 col-sm-9 p-0" id="reportContent">
+        <!-- Loading Spinner -->
+        <div class="d-flex justify-content-center mt-5" id="reportSpinner">
+            <div class="spinner-border text-info" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<style>
+    .subnet-card {
+        border-radius: 8px;
+        background-color: #212529;
+    }
+
+    .table-responsive {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .text-conflict {
+        color: #ef4444 !important;
+        font-weight: bold;
+    }
+
+    .text-manual {
+        color: #4ade80 !important;
+    }
+</style>
+<script>
+    $(document).ready(function () {
+        // Fetch report data
+        $.get('/api/report', function (res) {
+            $('#reportSpinner').addClass('d-none');
+            const subnets = res.subnets;
+            const data = res.data;
+            let navHtml = '';
+            let contentHtml = '';
+
+            if (subnets.length === 0) {
+                $('#reportContent').html(`<div class="alert alert-secondary">No recorded IPs found.</div>`);
+                return;
+            }
+
+            subnets.forEach(subnet => {
+                // Sidebar Nav
+                navHtml += `<a href="#subnet_${subnet.replace(/\./g, '_')}" class="list-group-item list-group-item-action list-group-item-dark fw-bold border-secondary py-3"><i class="fa-solid fa-network-wired me-2"></i> ${subnet}.0/24</a>`;
+
+                // Subnet Content Section
+                let tableRows = '';
+                const ips = data[subnet];
+
+                ips.forEach(ip => {
+                    // Decide Hostname Display Strategy
+                    let hostDisplay = ip.h_hostname || 'TBD/待定';
+                    if (ip.e_hostname && ip.h_hostname && ip.e_hostname !== 'TBD/待定' && ip.e_hostname !== ip.h_hostname) {
+                        hostDisplay = `<span class="text-conflict" title="Scanner: ${ip.h_hostname} | Hand filled: ${ip.e_hostname}">${ip.e_hostname} <i class="fa-solid fa-triangle-exclamation ms-1"></i></span>`;
+                    } else if (ip.e_hostname && ip.e_hostname !== 'TBD/待定') {
+                        hostDisplay = `<span class="text-manual">${ip.e_hostname}</span>`;
+                    }
+
+                    // Device Display Strategy
+                    let devDisplay = ip.h_device_type || 'N/A';
+                    if (ip.e_device_type && ip.e_device_type !== 'Any') {
+                        devDisplay = `<span class="text-manual">${ip.e_device_type}</span>`;
+                    }
+
+                    tableRows += `
+                    <tr>
+                        <td class="text-center">
+                            <a href="/ip_detail?ip=${ip.ip}" target="_blank" class="fw-bold text-info text-decoration-none"><i class="fa-solid fa-link me-1"></i> ${ip.ip}</a>
+                        </td>
+                        <td>${ip.mac || '<span class="text-muted">N/A</span>'}</td>
+                        <td style="max-width:200px;" class="text-truncate">${hostDisplay}</td>
+                        <td class="text-center"><span class="badge ${ip.h_status === 'Active' ? 'bg-success' : 'bg-secondary'}">${ip.h_status || ip.e_status || 'Unknown'}</span></td>
+                        <td>${devDisplay}</td>
+                        <td>${ip.machine_name || '<span class="text-muted">-</span>'}</td>
+                        <td>${ip.purpose || '<span class="text-muted">-</span>'}</td>
+                        <td>${ip.scan_time || ip.updated_time || '<span class="text-muted">-</span>'}</td>
+                    </tr>
+                    `;
+                });
+
+                contentHtml += `
+                <div class="card border-secondary mb-5 subnet-card shadow" id="subnet_${subnet.replace(/\./g, '_')}">
+                    <div class="card-header bg-dark border-secondary d-flex justify-content-between align-items-center py-3">
+                        <h4 class="mb-0 text-white"><i class="fa-solid fa-folder-tree text-info me-2"></i> Subnet: ${subnet}.0/24</h4>
+                        <span class="badge bg-primary rounded-pill fs-6">${ips.length} IPs recorded</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped table-hover mb-0 sticky-header-table">
+                                <thead style="position: sticky; top: 0; z-index: 1;">
+                                    <tr class="table-active">
+                                        <th class="text-center border-secondary">IP Address</th>
+                                        <th class="border-secondary">MAC Address</th>
+                                        <th class="border-secondary">Host Name</th>
+                                        <th class="text-center border-secondary">Status</th>
+                                        <th class="border-secondary">Device Type</th>
+                                        <th class="border-secondary">Physical Server</th>
+                                        <th class="border-secondary">Purpose</th>
+                                        <th class="border-secondary">Last Updated</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+
+            $('#subnetNav').html(navHtml);
+            $('#reportContent').html(contentHtml);
+
+            // Active nav handling on scroll
+            const sections = $('.subnet-card');
+            const navLinks = $('.list-group-item');
+
+            $(window).on('scroll', function () {
+                let current = '';
+                sections.each(function () {
+                    const sectionTop = $(this).offset().top;
+                    if (scrollY >= sectionTop - 120) {
+                        current = $(this).attr('id');
+                    }
+                });
+
+                navLinks.removeClass('active bg-primary border-primary').addClass('list-group-item-dark');
+                if (current) {
+                    $(`a[href="#${current}"]`).removeClass('list-group-item-dark').addClass('active bg-primary border-primary');
+                }
+            });
+
+        }).fail(function (err) {
+            $('#reportSpinner').addClass('d-none');
+            alert('Failed to load report data: ' + (err.responseJSON ? err.responseJSON.message : 'Unknown error'));
+        });
+    });
+</script>
+{% endblock %}

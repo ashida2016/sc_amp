@@ -453,5 +453,70 @@ def api_ip_detail_save():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/report')
+def report():
+    return render_template('report.html')
+
+@app.route('/api/report', methods=['GET'])
+def api_report():
+    query = """
+    WITH LatestHistory AS (
+        SELECT ip, mac, hostname as h_hostname, status as h_status, device_type as h_device_type, vendor, scan_time,
+               SUBSTRING_INDEX(ip, '.', 3) COLLATE utf8mb4_unicode_ci as subnet
+        FROM (
+            SELECT *, ROW_NUMBER() OVER(PARTITION BY ip ORDER BY scan_time DESC) as rn
+            FROM ip_history
+        ) t WHERE rn = 1
+    ),
+    AllIPs AS (
+        SELECT ip, subnet FROM LatestHistory
+        UNION
+        SELECT ip COLLATE utf8mb4_unicode_ci as ip, SUBSTRING_INDEX(ip, '.', 3) COLLATE utf8mb4_unicode_ci as subnet FROM ip_extend
+    )
+    SELECT 
+        a.ip,
+        a.subnet,
+        h.mac, 
+        h.h_hostname, 
+        h.h_status, 
+        h.h_device_type, 
+        h.vendor, 
+        h.scan_time,
+        e.pm_id, 
+        e.os_ver, 
+        e.purpose, 
+        e.comment, 
+        e.device_type as e_device_type, 
+        e.hostname as e_hostname, 
+        e.status as e_status, 
+        e.updated_time,
+        p.machine_name
+    FROM AllIPs a
+    LEFT JOIN LatestHistory h ON a.ip = h.ip COLLATE utf8mb4_unicode_ci
+    LEFT JOIN ip_extend e ON a.ip = e.ip COLLATE utf8mb4_unicode_ci
+    LEFT JOIN physical_machines p ON e.pm_id = p.id
+    ORDER BY INET_ATON(a.ip)
+    """
+    
+    rows = execute_query(query)
+    
+    # Organize data by subnet
+    report_data = {}
+    subnets_list = set()
+    for row in rows:
+        subnet = row.get('subnet')
+        if subnet not in report_data:
+            report_data[subnet] = []
+            subnets_list.add(subnet)
+        report_data[subnet].append(row)
+    
+    # Sort subnets naturally using inet_aton similar trick or just sort by parts
+    sorted_subnets = sorted(list(subnets_list), key=lambda s: [int(x) if x.isdigit() else 0 for x in s.split('.')])
+    
+    return jsonify({
+        "subnets": sorted_subnets,
+        "data": report_data
+    })
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
