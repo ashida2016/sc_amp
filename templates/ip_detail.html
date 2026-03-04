@@ -173,7 +173,7 @@
 
             // Hide details while loading
             $('#detailSection').addClass('d-none');
-            $('#currentIpDisplay').html(`Actual information - ${currentIP}`);
+            $('#currentIpDisplay').html(`Actual Information - ${currentIP}`);
             $('#extendIpDisplay').html(`Extended Information`);
 
             $.get(`/api/ip_detail/search?ip=${currentIP}`, function (res) {
