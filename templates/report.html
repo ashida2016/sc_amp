@@ -63,6 +63,15 @@
                 return;
             }
 
+            // Date formatting helper
+            function formatReportDate(dateString) {
+                if (!dateString) return '';
+                const d = new Date(dateString);
+                if (isNaN(d.getTime())) return dateString;
+                const pad = n => n.toString().padStart(2, '0');
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+            }
+
             const vlanComments = res.vlan_comments || {};
 
             subnets.forEach(subnet => {
@@ -124,7 +133,7 @@
                         <td>${devDisplay}</td>
                         <td>${ip.machine_name || '<span class="text-muted">-</span>'}</td>
                         <td>${ip.purpose || '<span class="text-muted">-</span>'}</td>
-                        <td>${ip.scan_time || ip.updated_time || '<span class="text-muted">-</span>'}</td>
+                        <td>${formatReportDate(ip.scan_time || ip.updated_time) || '<span class="text-muted">-</span>'}</td>
                     </tr>
                     `;
                 });
