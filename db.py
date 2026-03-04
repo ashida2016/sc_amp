@@ -39,6 +39,21 @@ def execute_query(query, params=None):
     finally:
         conn.close()
 
+def execute_update(query, params=None):
+    conn = get_db_connection()
+    if not conn:
+        return False
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(query, params)
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error executing update: {e}")
+        return False
+    finally:
+        conn.close()
+
 def get_latest_scans():
     query = """
     WITH Ranked AS (

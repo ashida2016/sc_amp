@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from db import execute_query, get_latest_scans
+from db import execute_query, get_latest_scans, execute_update
 
 app = Flask(__name__)
 
@@ -292,6 +292,179 @@ def api_trend_online():
             if hasattr(row['scan_date'], 'strftime'):
                 row['scan_date'] = row['scan_date'].strftime('%Y-%m-%d')
     return jsonify({"data": data})
+
+@app.route('/vlan_info')
+def vlan_info():
+    return render_template('vlan_info.html')
+
+@app.route('/api/vlan_info', methods=['GET', 'POST'])
+def api_vlan_info():
+    if request.method == 'GET':
+        # Auto sync subnets from ip_history mapping missing ones with "No comment"
+        sync_query = """
+        INSERT IGNORE INTO vlan_info (subnet, comment)
+        SELECT DISTINCT SUBSTRING_INDEX(ip, '.', 3), 'No comment'
+        FROM ip_history
+        """
+        execute_update(sync_query)
+
+        # Retrieve all mapped Subnets
+        query = """
+        SELECT subnet, COALESCE(comment, 'No comment') as comment
+        FROM vlan_info
+        ORDER BY subnet
+        """
+        data = execute_query(query)
+        return jsonify({"data": data})
+    elif request.method == 'POST':
+        try:
+            req_data = request.json
+            subnet = req_data.get('subnet')
+            comment = req_data.get('comment')
+            if subnet is not None and comment is not None:
+                query = """
+                INSERT INTO vlan_info (subnet, comment) VALUES (%s, %s)
+                ON DUPLICATE KEY UPDATE comment = VALUES(comment)
+                """
+                if execute_update(query, (subnet, comment)):
+                    return jsonify({"status": "success"})
+            return jsonify({"status": "error", "message": "Invalid request"}), 400
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/physical_info')
+def physical_info():
+    return render_template('physical_info.html')
+
+@app.route('/api/physical_info', methods=['GET', 'POST', 'DELETE'])
+def api_physical_info():
+    if request.method == 'GET':
+        query = "SELECT id, machine_name, management_ip, virtualization_type, purpose, comment FROM physical_machines ORDER BY id DESC"
+        data = execute_query(query)
+        return jsonify({"data": data})
+    elif request.method == 'POST':
+        try:
+            req_data = request.json
+            action = req_data.get('action')
+            if action == 'add':
+                query = """
+                INSERT INTO physical_machines (machine_name, management_ip, virtualization_type, purpose, comment)
+                VALUES (%s, %s, %s, %s, %s)
+                """
+                if execute_update(query, (
+                    req_data.get('machine_name', 'New Machine'),
+                    req_data.get('management_ip', ''),
+                    req_data.get('virtualization_type', 'Esxi 7 Server'),
+                    req_data.get('purpose', ''),
+                    req_data.get('comment', '')
+                )):
+                    return jsonify({"status": "success"})
+            elif action == 'update':
+                query = """
+                UPDATE physical_machines
+                SET machine_name=%s, management_ip=%s, virtualization_type=%s, purpose=%s, comment=%s
+                WHERE id=%s
+                """
+                if execute_update(query, (
+                    req_data.get('machine_name', ''),
+                    req_data.get('management_ip', ''),
+                    req_data.get('virtualization_type', ''),
+                    req_data.get('purpose', ''),
+                    req_data.get('comment', ''),
+                    req_data.get('id')
+                )):
+                    return jsonify({"status": "success"})
+            return jsonify({"status": "error", "message": "Invalid/failed request"}), 400
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+    elif request.method == 'DELETE':
+        try:
+            req_data = request.json
+            query = "DELETE FROM physical_machines WHERE id=%s"
+            if execute_update(query, (req_data.get('id'),)):
+                return jsonify({"status": "success"})
+            return jsonify({"status": "error", "message": "Delete failed"}), 400
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/ip_detail')
+def ip_detail():
+    return render_template('ip_detail.html')
+
+@app.route('/api/ip_detail/init', methods=['GET'])
+def api_ip_detail_init():
+    try:
+        # Fetch actual subnets from vlan_info or history
+        subnets_query = "SELECT DISTINCT SUBSTRING_INDEX(ip, '.', 3) as subnet FROM ip_history ORDER BY subnet"
+        subnets = [r['subnet'] for r in execute_query(subnets_query)]
+        
+        # Fetch device types
+        dtype_query = "SELECT DISTINCT device_type FROM ip_history WHERE device_type IS NOT NULL AND device_type != '' ORDER BY device_type"
+        device_types = [r['device_type'] for r in execute_query(dtype_query)]
+        
+        # Fetch physical machines
+        pm_query = "SELECT id, machine_name FROM physical_machines ORDER BY machine_name"
+        pms = execute_query(pm_query)
+        
+        return jsonify({"subnets": subnets, "device_types": device_types, "physical_machines": pms})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/ip_detail/search', methods=['GET'])
+def api_ip_detail_search():
+    ip = request.args.get('ip')
+    if not ip:
+        return jsonify({"error": "IP is required"}), 400
+        
+    history_query = "SELECT * FROM ip_history WHERE ip = %s ORDER BY scan_time DESC LIMIT 1"
+    history = execute_query(history_query, (ip,))
+    
+    extend_query = "SELECT * FROM ip_extend WHERE ip = %s"
+    extend = execute_query(extend_query, (ip,))
+    
+    return jsonify({
+        "history": history[0] if history else None,
+        "extend": extend[0] if extend else None
+    })
+
+@app.route('/api/ip_detail/save', methods=['POST'])
+def api_ip_detail_save():
+    try:
+        req_data = request.json
+        ip = req_data.get('ip')
+        if not ip:
+            return jsonify({"status": "error", "message": "IP is missing"}), 400
+            
+        # If the user is submitting a new or modifying basic history record from the form
+        if req_data.get('save_history'):
+            device_type = req_data.get('device_type')
+            hostname = req_data.get('hostname')
+            status = req_data.get('status', 'Reserved')
+            # Insert a manual record into ip_history as the newest info
+            insert_hist = """
+            INSERT INTO ip_history (ip, mac, hostname, status, device_type, vendor)
+            VALUES (%s, '', %s, %s, %s, '')
+            """
+            execute_update(insert_hist, (ip, hostname, status, device_type))
+            
+        # Parse extend fields
+        pm_id = req_data.get('pm_id')
+        os_ver = req_data.get('os_ver')
+        purpose = req_data.get('purpose')
+        comment = req_data.get('comment')
+        
+        pm_val = pm_id if pm_id != '' else None
+        
+        insert_ext = """
+        INSERT INTO ip_extend (ip, pm_id, os_ver, purpose, comment)
+        VALUES (%s, %s, %s, %s, %s)
+        ON DUPLICATE KEY UPDATE pm_id=VALUES(pm_id), os_ver=VALUES(os_ver), purpose=VALUES(purpose), comment=VALUES(comment)
+        """
+        execute_update(insert_ext, (ip, pm_val, os_ver, purpose, comment))
+        
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

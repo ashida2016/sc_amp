@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4 d-flex justify-content-between align-items-center">
+        <h2>Physical PCs Info</h2>
+        <button id="addBtn" class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i> Add New Record</button>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="text-white mb-0">Physical Machines Management</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-white mb-3" style="font-size: 0.95rem;">
+                    <i class="fa-solid fa-circle-info me-1 text-info"></i> 在这里管理物理机资产信息。界面支持类似 Excel
+                    的直接编辑体验，修改任意字段失焦后将自动保存。
+                </p>
+                <div class="table-responsive">
+                    <table id="pcsTable" class="table table-dark table-hover w-100 align-middle">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Machine Name (名称)</th>
+                                <th>Management IP (管理 IP)</th>
+                                <th>Virtualization Type (虚拟化机制)</th>
+                                <th>Purpose (用途说明)</th>
+                                <th>Comment (备注)</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast for saved message -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="saveToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive"
+        aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fa-solid fa-check-circle me-1"></i> 信息已成功保存！
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function () {
+        const vTypes = ['Esxi 7 Server', 'Esxi 8 Server', 'Hyper-V Server', 'Real Docker', 'Others'];
+
+        const table = $('#pcsTable').DataTable({
+            ajax: '/api/physical_info',
+            columns: [
+                { data: 'id', width: '5%' },
+                {
+                    data: 'machine_name',
+                    render: function (data, type, row) {
+                        return `<input type="text" class="form-control text-light border-secondary cell-edit" data-id="${row.id}" data-field="machine_name" value="${data || ''}">`;
+                    }
+                },
+                {
+                    data: 'management_ip',
+                    render: function (data, type, row) {
+                        return `<input type="text" class="form-control text-light border-secondary cell-edit" data-id="${row.id}" data-field="management_ip" value="${data || ''}">`;
+                    }
+                },
+                {
+                    data: 'virtualization_type',
+                    render: function (data, type, row) {
+                        let options = vTypes.map(v => `<option value="${v}" ${v === data ? 'selected' : ''}>${v}</option>`).join('');
+                        return `<select class="form-select text-light border-secondary cell-edit" data-id="${row.id}" data-field="virtualization_type" style="background-color: #212529">${options}</select>`;
+                    }
+                },
+                {
+                    data: 'purpose',
+                    render: function (data, type, row) {
+                        return `<input type="text" class="form-control text-light border-secondary cell-edit" data-id="${row.id}" data-field="purpose" value="${data || ''}">`;
+                    }
+                },
+                {
+                    data: 'comment',
+                    render: function (data, type, row) {
+                        return `<input type="text" class="form-control text-light border-secondary cell-edit" data-id="${row.id}" data-field="comment" value="${data || ''}">`;
+                    }
+                }
+            ],
+            pageLength: 25,
+            order: [[0, "desc"]],
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search PCs..."
+            }
+        });
+
+        // Add New Record
+        $('#addBtn').click(function () {
+            $.ajax({
+                url: '/api/physical_info',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    action: 'add',
+                    machine_name: 'New Machine ' + Math.floor(Math.random() * 1000),
+                    management_ip: '',
+                    virtualization_type: 'Esxi 7 Server',
+                    purpose: '',
+                    comment: ''
+                }),
+                success: function (response) {
+                    if (response.status === 'success') {
+                        table.ajax.reload();
+                    }
+                }
+            });
+        });
+
+        // Auto-Save modifications
+        $('#pcsTable').on('change', '.cell-edit', function () {
+            const inputEl = $(this);
+            const id = inputEl.data('id');
+            const field = inputEl.data('field');
+            const val = inputEl.val();
+
+            // Collect the entire row's current state to send full update
+            const rowEl = inputEl.closest('tr');
+            const machine_name = rowEl.find('[data-field="machine_name"]').val();
+            const management_ip = rowEl.find('[data-field="management_ip"]').val();
+            const virtualization_type = rowEl.find('[data-field="virtualization_type"]').val();
+            const purpose = rowEl.find('[data-field="purpose"]').val();
+            const comment = rowEl.find('[data-field="comment"]').val();
+
+            $.ajax({
+                url: '/api/physical_info',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    action: 'update',
+                    id: id,
+                    machine_name: machine_name,
+                    management_ip: management_ip,
+                    virtualization_type: virtualization_type,
+                    purpose: purpose,
+                    comment: comment
+                }),
+                success: function (response) {
+                    if (response.status === 'success') {
+                        // Show toast
+                        const toast = new bootstrap.Toast(document.getElementById('saveToast'));
+                        toast.show();
+
+                        inputEl.addClass('is-valid');
+                        setTimeout(() => inputEl.removeClass('is-valid'), 2000);
+                    }
+                },
+                error: function () {
+                    alert('保存失败，请检查网络或后端状态。');
+                    inputEl.addClass('is-invalid');
+                }
+            });
+        });
+    });
+</script>
+<style>
+    .cell-edit {
+        width: 100%;
+        min-width: 130px;
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .cell-edit:focus {
+        background-color: #1e293b !important;
+        border-color: #4361ee !important;
+        box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25) !important;
+    }
+
+    .cell-edit.is-valid {
+        border-color: #06d6a0 !important;
+        background-color: rgba(6, 214, 160, 0.1) !important;
+    }
+
+    .cell-edit.is-invalid {
+        border-color: #ef233c !important;
+    }
+
+    /* 防止输入框自带的绿色打勾覆盖较多空间 */
+    .form-control.is-valid,
+    .was-validated .form-control:valid,
+    .form-select.is-valid,
+    .was-validated .form-select:valid {
+        background-image: none !important;
+    }
+
+    select.cell-edit option {
+        background-color: #212529 !important;
+        color: #fff;
+    }
+</style>
+{% endblock %}

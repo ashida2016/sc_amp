@@ -2,7 +2,7 @@
     "MySqlConfig": {
         "Server" : "192.168.1.50",
         "Database" :"scan_history",
-        "Uid" : "scaner",
-        "Pwd" : "ipaRecord2026^"
+        "Uid" : "manager",
+        "Pwd" : "ampManager2026^"
     }
 }

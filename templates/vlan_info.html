@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h2>VLAN Info Management</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="text-white mb-0">Subnet Descriptions</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-white mb-3" style="font-size: 0.95rem;">
+                    <i class="fa-solid fa-circle-info me-1 text-info"></i> 在这里管理您的网段备注信息。类似于 Excel
+                    的操作体验，您可以直接点击备注文本框进行编辑。输入新内容后，点击框外或按下回车即可自动保存至数据库的 vlan_info 表。
+                </p>
+                <div class="table-responsive">
+                    <table id="vlanTable" class="table table-dark table-hover w-100 align-middle">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%">Subnet (Network)</th>
+                                <th style="width: 75%">Comment / Description</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast for saved message -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="saveToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive"
+        aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fa-solid fa-check-circle me-1"></i> 备注已成功保存！
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function () {
+        const table = $('#vlanTable').DataTable({
+            ajax: '/api/vlan_info',
+            columns: [
+                {
+                    data: 'subnet',
+                    render: function (data) {
+                        return `<span class="fw-bold">${data}.x</span>`;
+                    }
+                },
+                {
+                    data: 'comment',
+                    render: function (data, type, row) {
+                        // Display 'No comment' as default
+                        const displayVal = data === 'No comment' ? '' : data;
+                        return `<input type="text" class="form-control text-light border-secondary comment-edit" data-subnet="${row.subnet}" value="${displayVal}" placeholder="No comment">`;
+                    }
+                }
+            ],
+            pageLength: 25,
+            order: [[0, "asc"]],
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search Subnet/Comment..."
+            }
+        });
+
+        // Event delegation for saving comment on blur or value change
+        $('#vlanTable').on('change', '.comment-edit', function () {
+            const subnet = $(this).data('subnet');
+            let comment = $(this).val().trim();
+            if (comment === '') {
+                comment = 'No comment';
+            }
+            const inputEl = $(this);
+
+            $.ajax({
+                url: '/api/vlan_info',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ subnet: subnet, comment: comment }),
+                success: function (response) {
+                    if (response.status === 'success') {
+                        // Show toast
+                        const toast = new bootstrap.Toast(document.getElementById('saveToast'));
+                        toast.show();
+
+                        // Briefly show valid border
+                        inputEl.addClass('is-valid');
+                        setTimeout(() => inputEl.removeClass('is-valid'), 2000);
+                    }
+                },
+                error: function () {
+                    alert('保存失败，请检查网络或后端状态。');
+                }
+            });
+        });
+    });
+</script>
+<style>
+    /* 自定义编辑框样式 */
+    .comment-edit {
+        width: 100%;
+        min-width: 200px;
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .comment-edit:focus {
+        background-color: #1e293b !important;
+        border-color: #4361ee !important;
+        box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25) !important;
+    }
+
+    .comment-edit.is-valid {
+        border-color: #06d6a0 !important;
+        background-color: rgba(6, 214, 160, 0.1) !important;
+    }
+
+    /* 防止输入框自带的绿色打勾覆盖右侧空间 */
+    .form-control.is-valid,
+    .was-validated .form-control:valid {
+        background-image: none !important;
+        padding-right: 0.75rem !important;
+    }
+</style>
+{% endblock %}
