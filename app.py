@@ -300,19 +300,16 @@ def vlan_info():
 @app.route('/api/vlan_info', methods=['GET', 'POST'])
 def api_vlan_info():
     if request.method == 'GET':
-        # Auto sync subnets from ip_history mapping missing ones with "No comment"
-        sync_query = """
-        INSERT IGNORE INTO vlan_info (subnet, comment)
-        SELECT DISTINCT SUBSTRING_INDEX(ip, '.', 3), 'No comment'
-        FROM ip_history
-        """
-        execute_update(sync_query)
-
-        # Retrieve all mapped Subnets
         query = """
-        SELECT subnet, COALESCE(comment, 'No comment') as comment
-        FROM vlan_info
-        ORDER BY subnet
+        WITH AllSubnets AS (
+            SELECT DISTINCT SUBSTRING_INDEX(ip, '.', 3) as subnet FROM ip_history
+            UNION
+            SELECT subnet FROM vlan_info
+        )
+        SELECT a.subnet, COALESCE(v.comment, 'No comment') as comment
+        FROM AllSubnets a
+        LEFT JOIN vlan_info v ON a.subnet = v.subnet
+        ORDER BY a.subnet
         """
         data = execute_query(query)
         return jsonify({"data": data})
