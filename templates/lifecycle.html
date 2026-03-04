@@ -14,8 +14,8 @@
             </div>
             <div class="card-body">
                 <p class="text-white mb-3" style="font-size: 0.95rem;">
-                    <i class="fa-solid fa-circle-info me-1 text-info"></i>本图表展示了各个 IP 子网块目前已知分配的设备数量占整个 C
-                    段（254个可用地址）的使用率。绿色表示宽裕，黄色表示预警，红色表示拥挤。
+                    <i class="fa-solid fa-circle-info me-1 text-info"></i>本图表展示了各个 IP 子网块目前已知分配的存活设备数量排行，并按照 IP
+                    数量降序排列，方便快速定位高密度网段。
                 </p>
                 <div id="utilizationChart" class="chart-container" style="height: 500px"></div>
             </div>
@@ -56,26 +56,34 @@
         $.get('/api/lifecycle/utilization', function (response) {
             let data = response.data;
 
-            // 按网段内机器数量从少到多排序
+            // ECharts 纵轴(类目轴)默认是将数组最后一位渲染在最上方，
+            // 故升序排序即可实现视觉上的“从大到小降序排列”
             data.sort((a, b) => a.active_ips - b.active_ips);
 
             const xData = data.map(item => item.subnet + '.x');
-            const yData = data.map(item => item.utilization_pct);
+            const yData = data.map(item => item.active_ips);
 
             utilChart.setOption({
                 backgroundColor: chartBg,
-                tooltip: { formatter: '{b} <br/>Utilization: {c}%' },
-                xAxis: { type: 'value', max: 100, name: '%' },
-                yAxis: { type: 'category', data: xData },
+                tooltip: { formatter: '{b} <br/>IP 数量: {c}' },
+                xAxis: {
+                    type: 'value',
+                    name: 'IP 数量',
+                    axisLine: { lineStyle: { color: '#87ceeb' } },
+                    axisLabel: { color: '#87ceeb' },
+                    nameTextStyle: { color: '#87ceeb' },
+                    splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.1)' } }
+                },
+                yAxis: {
+                    type: 'category',
+                    data: xData,
+                    axisLabel: { fontSize: 14 }
+                },
                 series: [{
                     type: 'bar',
                     data: yData,
                     itemStyle: {
-                        color: function (params) {
-                            if (params.value > 80) return '#ef233c'; // Danger
-                            if (params.value > 60) return '#ffd166'; // Warning
-                            return '#06d6a0'; // Safe
-                        }
+                        color: '#87ceeb'
                     }
                 }]
             });
