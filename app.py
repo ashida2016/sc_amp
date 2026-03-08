@@ -510,6 +510,13 @@ def api_report():
     report_data = {}
     subnets_list = set()
     for row in rows:
+        if 'scan_time' in row and row['scan_time']:
+            if hasattr(row['scan_time'], 'strftime'):
+                row['scan_time'] = row['scan_time'].strftime('%Y-%m-%d %H:%M:%S')
+        if 'updated_time' in row and row['updated_time']:
+            if hasattr(row['updated_time'], 'strftime'):
+                row['updated_time'] = row['updated_time'].strftime('%Y-%m-%d %H:%M:%S')
+
         subnet = row.get('subnet')
         if subnet not in report_data:
             report_data[subnet] = []

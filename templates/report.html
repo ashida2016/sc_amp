@@ -66,10 +66,7 @@
             // Date formatting helper
             function formatReportDate(dateString) {
                 if (!dateString) return '';
-                const d = new Date(dateString);
-                if (isNaN(d.getTime())) return dateString;
-                const pad = n => n.toString().padStart(2, '0');
-                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+                return dateString;
             }
 
             const vlanComments = res.vlan_comments || {};
@@ -122,6 +119,9 @@
                         macDisplay = `<span class="text-danger fw-bold">00:00:00:00:00:00</span>`;
                     }
 
+                    // Vendor Display Strategy
+                    let vendorDisplay = ip.vendor || '';
+
                     tableRows += `
                     <tr>
                         <td class="text-center">
@@ -130,6 +130,7 @@
                         <td>${macDisplay}</td>
                         <td style="max-width:200px;" class="text-truncate">${hostDisplay}</td>
                         <td class="text-center">${statusDisplay}</td>
+                        <td>${vendorDisplay}</td>
                         <td>${devDisplay}</td>
                         <td>${ip.machine_name || '<span class="text-muted">-</span>'}</td>
                         <td>${ip.purpose || '<span class="text-muted">-</span>'}</td>
@@ -155,6 +156,7 @@
                                         <th class="border-secondary">MAC Address</th>
                                         <th class="border-secondary">Host Name</th>
                                         <th class="text-center border-secondary">Status</th>
+                                        <th class="border-secondary">Vendor</th>
                                         <th class="border-secondary">Device Type</th>
                                         <th class="border-secondary">Physical Server</th>
                                         <th class="border-secondary">Purpose</th>
