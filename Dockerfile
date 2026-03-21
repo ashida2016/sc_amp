@@ -1,5 +1,13 @@
+# 先删除旧代码
+# sudo rm -r sc_amp
+# 下载新代码
+# sudo git clone https://github.com/ashida2016/sc_amp.git
+# 拉起 Docker 容器
+# cd /home/docker_stack
+# sudo docker compose up -d --build site-amp-dev
+
 # 1. 使用官方的、轻量级的 Python 镜像作为基础
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 # 2. 设置容器内的工作目录
 WORKDIR /app
