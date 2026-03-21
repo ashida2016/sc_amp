@@ -1,4 +1,5 @@
 # 先删除旧代码
+# cd /home/docker_stack
 # sudo rm -r sc_amp
 # 下载新代码
 # sudo git clone https://github.com/ashida2016/sc_amp.git
