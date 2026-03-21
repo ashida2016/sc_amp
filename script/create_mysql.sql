@@ -1,3 +1,4 @@
+-- 创建 AMP 所需要的表
 -- 1) 创建数据库（如果不存在则新建）
 CREATE DATABASE IF NOT EXISTS scan_history CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE scan_history;
@@ -10,8 +11,8 @@ CREATE TABLE IF NOT EXISTS `vlan_info` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 3) Create manager account
-CREATE USER IF NOT EXISTS 'manager'@'%' IDENTIFIED BY 'ampManager2026^';
-GRANT SELECT, INSERT, UPDATE, DELETE ON `scan_history`.* TO 'manager'@'%';
+CREATE USER IF NOT EXISTS 'ampManager'@'%' IDENTIFIED BY 'NexCf2026^^';
+GRANT SELECT, INSERT, UPDATE, DELETE ON `scan_history`.* TO 'ampManager'@'%';
 FLUSH PRIVILEGES;
 
 -- 4) Create physical_machines table

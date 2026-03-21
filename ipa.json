@@ -2,7 +2,7 @@
     "MySqlConfig": {
         "Server" : "192.168.1.50",
         "Database" :"scan_history",
-        "Uid" : "nexManager",
-        "Pwd" : "NexCf2026^^"
+        "Uid" : "ampManager",
+        "Pwd" : "AmpCf2026^"
     }
 }
