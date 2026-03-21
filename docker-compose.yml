@@ -1,0 +1,15 @@
+  # --------------------------------------------------------
+  # 10. Web 应用 : Django (IP: .183) - Python 3.12
+  # --------------------------------------------------------
+  site-amp-dev:
+      build: ./sc_amp
+      container_name: site-amp-dev
+      restart: unless-stopped
+      networks:
+        macnet20g:
+          ipv4_address: 192.168.1.183
+      expose:
+        - "5000"                     # 声明 Flask 的内部端口，供 nginx-proxy 嗅探
+      environment:
+        - VIRTUAL_HOST=amp.home.lan  # 告诉 nginx-proxy：遇到这个域名就转给我
+        - VIRTUAL_PORT=5000          # 告诉 nginx-proxy：把流量打到我的 5000 端口
