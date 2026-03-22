@@ -2,7 +2,9 @@
   # 10. Web 应用 : Django (IP: .183) - Python 3.12
   # --------------------------------------------------------
   site-amp-dev:
-      build: ./sc_amp
+      build:
+        context: ./sc_amp
+        network: host       # <--- 让构建过程直接使用宿主机的完美网络和 DNS
       container_name: site-amp-dev
       restart: unless-stopped
       networks:
