@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS `vlan_info` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 3) Create manager account
-CREATE USER IF NOT EXISTS 'ampManager'@'%' IDENTIFIED BY 'NexCf2026^^';
+CREATE USER IF NOT EXISTS 'ampManager'@'%' IDENTIFIED BY 'AmpCf2026^';
 GRANT SELECT, INSERT, UPDATE, DELETE ON `scan_history`.* TO 'ampManager'@'%';
 FLUSH PRIVILEGES;
 
