@@ -1,6 +1,6 @@
 {
     "MySqlConfig": {
-        "Server" : "10.0.133.50",
+        "Server" : "10.0.113.50",
         "Database" :"scan_history",
         "Uid" : "ampManager",
         "Pwd" : "AmpCf2026^"

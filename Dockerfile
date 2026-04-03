@@ -23,5 +23,11 @@ RUN if [ -f requirements.txt ]; then \
     pip install --no-cache-dir flask gunicorn; \
     fi
 
+# 确保gunicorn在PATH中
+ENV PATH="/usr/local/bin:$PATH"
+
+# 设置执行权限
+RUN chmod +x /usr/local/bin/gunicorn
+
 # 启动 Flask。注意：这里假设入口文件为 app.py
 CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:app"]
